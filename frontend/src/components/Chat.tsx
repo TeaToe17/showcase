@@ -1,0 +1,671 @@
+"use client";
+import type React from "react";
+
+import { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Send,
+  ShoppingBag,
+  AlertCircle,
+  Loader2,
+  Check,
+  X,
+} from "lucide-react";
+import { connectToChat, fetchUser, LoggedIn } from "@/lib/utils";
+import api from "@/lib/api";
+import { useAppContext } from "@/context";
+import { useRouter } from "next/navigation";
+
+interface ChatProps {
+  receiverId: number;
+}
+
+const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
+  const router = useRouter();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [ws, setWs] = useState<WebSocket | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [input, setInput] = useState("");
+  const { currentProduct, setCurrentProduct } = useAppContext();
+  const [productId, setProductId] = useState<number | string>("");
+  const [ownerId, setOwnerId] = useState<number | string>("");
+  const [agreedPrice, setAgreedPrice] = useState<number | string>("");
+  const [isProductOwner, setIsProductOwner] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
+  const [showOrderSuccess, setShowOrderSuccess] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showDiv, setShowDiv] = useState(true);
+
+  // Load product and owner IDs from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedProductId = localStorage.getItem("productId");
+      const storedOwnerId = localStorage.getItem("ownerId");
+
+      if (storedProductId && storedOwnerId) {
+        setProductId(storedProductId);
+        setOwnerId(storedOwnerId);
+      }
+    }
+
+    return () => {
+      // Always remove as users might leave midway and comback to negotiate on a different product with the Other user being the owner this time.
+      localStorage.removeItem("productId");
+      localStorage.removeItem("ownerId");
+    };
+  }, []);
+
+  // Fetch chat history
+  const fetchHistory = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await api.get(`user/list_messages/${receiverId}/`);
+      const resDict = response.data;
+
+      if (Array.isArray(resDict) && resDict.length !== 0) {
+        const formattedMessage = resDict.map((msg: any) => ({
+          text: msg.content,
+          sender_id: msg.sender,
+          // created_at: msg.timestamp,
+          created_at: formatTime(msg.timestamp)
+        }));
+        setMessages(formattedMessage);
+      }
+
+      // Get current user
+      const user = await fetchUser();
+      setCurrentUser(user);
+    } catch (error: any) {
+      console.error("Failed to fetch chat history", error);
+      setError("Failed to load chat history. Please login and try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Connect to WebSocket and fetch history
+  useEffect(() => {
+    if (!receiverId) return;
+
+    fetchHistory();
+
+    let socket: WebSocket | null = null;
+
+    console.log(currentProduct);
+    try {
+      socket = currentProduct
+        ? connectToChat(receiverId, currentProduct.id, currentProduct.owner)
+        : connectToChat(receiverId);
+
+      if (socket) {
+        setWs(socket);
+
+        socket.onmessage = (e) => {
+          const data = JSON.parse(e.data);
+          console.log(data);
+
+          if (data.scope == "group") {
+            setMessages((prev) => [...prev, data]);
+          }
+
+          if (data.product_id && data.owner_id) {
+            setProductId(data.product_id);
+            if (typeof window !== "undefined") {
+              localStorage.setItem("productId", data.product_id.toString());
+            }
+
+            setOwnerId(data.owner_id);
+            if (typeof window !== "undefined") {
+              localStorage.setItem("ownerId", data.owner_id.toString());
+            }
+          }
+
+          const pattern = /^The transaction has been confirmed at (\d+)$/i;
+          const match = data.text.trim().match(pattern);
+
+          if (match) {
+            const price = parseInt(match[1], 10); // Extracted price as integer
+
+            HandleOrder(price); // Send price to your handler
+
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("ownerId");
+              localStorage.removeItem("productId");
+            }
+
+            setShowOrderSuccess(true);
+          }
+        };
+
+        socket.onopen = () => {
+          setError(null);
+        };
+
+        socket.onerror = () => {
+          setError("Connection error. Please refresh the page.");
+        };
+
+        socket.onclose = () => {
+          console.log("WebSocket connection closed");
+        };
+      }
+    } catch (err) {
+      console.error("WebSocket connection failed", err);
+      setError("Failed to connect to chat. Please refresh the page.");
+    }
+
+    return () => {
+      if (
+        socket &&
+        (socket.readyState === WebSocket.OPEN ||
+          socket.readyState === WebSocket.CONNECTING)
+      ) {
+        console.log("Closing socket from cleanup...");
+        socket.close();
+      }
+    };
+  }, [receiverId, currentProduct]);
+
+  // Persist messages in localStorage
+  useEffect(() => {
+    if (messages.length !== 0) {
+      localStorage.setItem("messages", JSON.stringify(messages));
+    }
+    if (messages.length == 0) {
+      const storedMessages = localStorage.getItem("messages");
+      if (storedMessages) {
+        const parsed = JSON.parse(storedMessages);
+        if (Array.isArray(parsed)) {
+          setMessages(parsed);
+        }
+      }
+    }
+  }, [messages]);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest", // or "end"
+      inline: "nearest",
+    });
+  }, [messages]);
+
+  // Check if current user is the product owner
+  useEffect(() => {
+    if (ownerId && productId) {
+      const confirmSeller = async () => {
+        const user = await fetchUser();
+        if (user.id == ownerId) {
+          setIsProductOwner(true);
+        }
+      };
+      confirmSeller();
+    }
+  }, [ownerId, productId]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const forbiddenPhrase = /^The transaction has been confirmed at \d+$/i;
+    const value = e.target.value;
+
+    if (forbiddenPhrase.test(value)) {
+      setError("This input is not allowed.");
+      return; // do not update the input
+    }
+
+    setInput(value);
+  };
+
+  // Send admin message
+  const sendAdminMessage = (text: string) => {
+    if (ws && text.trim()) {
+      ws.send(JSON.stringify({ message: text }));
+    }
+  };
+
+  const ApproveOrder = () => {
+    if (!agreedPrice) {
+      setError("Please enter an agreed price");
+      return;
+    }
+    sendAdminMessage(`The transaction has been confirmed at ${agreedPrice}`);
+  };
+
+  const HandleOrder = async (price: number) => {
+    localStorage.removeItem("productId");
+    localStorage.removeItem("ownerId");
+    setIsProductOwner(false);
+    if (!currentProduct) return;
+    setIsSending(true);
+    setError(null);
+    try {
+      const user = await fetchUser();
+
+      const formData = new FormData();
+      formData.append(
+        "product",
+        currentProduct?.id.toString() ?? "Missing Book ID"
+      );
+      formData.append("agreed_price", price.toString());
+      formData.append("buyer_name", user.name ?? "Missing Name");
+      formData.append(
+        "buyer_whatsapp_contact",
+        user.whatsapp ?? "Missing WhatsApp"
+      );
+      formData.append("buyer_call_contact", user.call ?? "Missing Call");
+
+      await api.post("order/create/", formData);
+
+      // Show success message
+      setShowOrderSuccess(true);
+
+      // Send message to chat
+      sendAdminMessage("Deal Approved");
+
+      // Reset product state
+      setCurrentProduct(null);
+      localStorage.removeItem("productId");
+
+      // Redirect to WhatsApp
+      router.push(
+        `https://wa.me/2347046938727?text=Hello%20I%20am%20${encodeURIComponent(
+          user.name
+        )},%0AI%20just%20concluded%20an%20order%20for%20${encodeURIComponent(
+          currentProduct?.name ?? ""
+        )}%20(${currentProduct?.id})`
+      );
+    } catch (error: any) {
+      console.error("Unexpected error in HandleOrder:", error);
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  // const handleOrder = async () => {
+  //   if (!agreedPrice) {
+  //     setError("Please enter an agreed price");
+  //     return;
+  //   }
+
+  //   if (!isProductOwner) {
+  //     setError(
+  //       "Only the seller can authorize orders. Make sure you're navigating here through the product."
+  //     );
+  //     return;
+  //   }
+
+  //   setIsSending(true);
+  //   setError(null);
+
+  //   try {
+  //     const user = await fetchUser();
+
+  //     const formData = new FormData();
+  //     formData.append(
+  //       "product",
+  //       currentProduct?.id.toString() ?? "Missing Book ID"
+  //     );
+  //     formData.append("agreed_price", agreedPrice.toString());
+  //     formData.append("buyer_name", user.name ?? "Missing Name");
+  //     formData.append(
+  //       "buyer_whatsapp_contact",
+  //       user.whatsapp ?? "Missing WhatsApp"
+  //     );
+  //     formData.append("buyer_call_contact", user.call ?? "Missing Call");
+
+  //     await api.post("order/create/", formData);
+
+  //     // Show success message
+  //     setShowOrderSuccess(true);
+
+  //     // Send message to chat
+  //     sendAdminMessage("Deal Approved");
+
+  //     // Reset product state
+  //     setCurrentProduct(null);
+  //     localStorage.removeItem("productId");
+
+  //     // Redirect to WhatsApp
+  //     router.push(
+  //       `https://wa.me/2347046938727?text=Hello%20I%20am%20${encodeURIComponent(
+  //         user.name
+  //       )},%0AI%20just%20concluded%20an%20order%20for%20${encodeURIComponent(
+  //         currentProduct?.name ?? ""
+  //       )}%20(${currentProduct?.id})`
+  //     );
+  //   } catch (error: any) {
+  //     console.error("Unexpected error in HandleOrder:", error);
+  //     setError("An unexpected error occurred. Please try again.");
+  //   } finally {
+  //     setIsSending(false);
+  //   }
+  // };
+
+  // Send message
+  const sendMessage = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    if (ws && input.trim()) {
+      setIsSending(true);
+
+      try {
+        ws.send(JSON.stringify({ message: input }));
+        setInput("");
+      } catch (error) {
+        setError("Failed to send message. Please try again.");
+      } finally {
+        setIsSending(false);
+      }
+    }
+  };
+
+  // Format message timestamp
+  const formatTime = (timeString: string) => {
+    try {
+      const date = new Date(timeString);
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (e) {
+      return "";
+    }
+  };
+
+  useEffect(() => {
+    if (!LoggedIn) router.replace("/login");
+  }, [LoggedIn, router]);
+
+  /* ---------- render ---------- */
+  if (!LoggedIn) {
+    // You can show a placeholder while the redirect happens
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="flex justify-center items-center h-full">
+          <Loader2 size={40} className="text-[#1c2b3a] animate-spin" />
+        </div>
+        <p>Redirecting to login…</p>
+      </div>
+    );
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowDiv(false);
+    }, 7000); // Show for 7 seconds
+
+    return () => clearTimeout(timer); // Cleanup on unmount
+  }, []);
+
+  return (
+    <div className="flex flex-col h-full relative">
+      {/* Order success message */}
+      <AnimatePresence>
+        {showOrderSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="bg-green-100 p-3 rounded-full mb-4">
+                  <Check size={32} className="text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Order Authorized Successfully!
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Your order has been successfully authorized. You'll be
+                  redirected to WhatsApp to complete the process.
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowOrderSuccess(false)}
+                  className="bg-gradient-to-r from-[#fcecd8] to-[#1c2b3a] text-white px-6 py-2 rounded-md shadow-sm hover:opacity-90 transition-all"
+                >
+                  Close
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Error message */}
+      <AnimatePresence>
+        <>
+          {error && error !== "This input is not allowed." && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2"
+            >
+              <AlertCircle size={20} />
+              <p>{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="ml-auto text-red-700 hover:text-red-900"
+              >
+                <X size={16} />
+              </button>
+            </motion.div>
+          )}
+        </>
+      </AnimatePresence>
+
+      {/* Messages area */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader2 size={40} className="text-[#1c2b3a] animate-spin" />
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">
+              No messages yet. Start the conversation!
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {messages.map((msg, i) => {
+              const isCurrentUser =
+                currentUser && msg.sender_id === currentUser.id;
+
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05, duration: 0.3 }}
+                  className={`flex ${
+                    isCurrentUser ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-lg px-4 py-3 ${
+                      isCurrentUser
+                        ? "bg-gradient-to-r from-[#fcecd8] to-[#1c2b3a] text-white"
+                        : "bg-white border border-gray-200 text-gray-800"
+                    }`}
+                  >
+                    {!isCurrentUser && (
+                      <div className="font-semibold mb-1 text-sm">
+                        {msg.sender_id === "system"
+                          ? "System"
+                          : `User #${msg.sender_id}`}
+                      </div>
+                    )}
+                    <div
+                      className="text-sm sm:text-base"
+                      dangerouslySetInnerHTML={{ __html: msg.text }}
+                    />
+                    {msg.created_at && (
+                      <div
+                        className={`text-xs mt-1 ${
+                          isCurrentUser ? "text-white/70" : "text-gray-500"
+                        }`}
+                      >
+                        {msg.created_at}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+      </div>
+      {/* Product order panel for sellers */}
+      {isProductOwner && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-gradient-to-r from-[#fcecd8] to-[#1c2b3a]/90 p-4 rounded-lg mb-4 shadow-md"
+        >
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex items-center gap-2 text-white">
+              <ShoppingBag size={20} />
+              <span className="font-medium">Authorize Order</span>
+            </div>
+
+            <div className="flex-1 flex flex-col sm:flex-row gap-3">
+              <input
+                type="number"
+                placeholder="Agreed Price e.g 5000"
+                value={agreedPrice}
+                onChange={(e) => setAgreedPrice(e.target.value)}
+                className="px-4 py-2 rounded-md border border-white/30 bg-white/10 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 w-full sm:w-auto"
+              />
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={ApproveOrder}
+                disabled={isSending || !agreedPrice}
+                className={`px-4 py-2 rounded-md flex items-center justify-center gap-2 transition-colors ${
+                  isSending || !agreedPrice
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-white text-[#1c2b3a] hover:bg-opacity-90"
+                }`}
+              >
+                {isSending ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} />
+                    <span>Authorize Order</span>
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+      <AnimatePresence>
+        <>
+          {error == "This input is not allowed." && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2"
+            >
+              <AlertCircle size={20} />
+              <p>{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="ml-auto text-red-700 hover:text-red-900"
+              >
+                <X size={16} />
+              </button>
+            </motion.div>
+          )}
+        </>
+      </AnimatePresence>
+      {showDiv && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-gradient-to-r from-[#fcecd8]/50 to-[#1c2b3a]/10 border border-[#fcecd8] rounded-lg p-4 shadow-sm"
+        >
+          <div className="flex items-start gap-3">
+            <div className="text-[#1c2b3a] mt-0.5">
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <h4 className="font-medium text-[#1c2b3a] mb-1">
+                Important Information for Buyers
+              </h4>
+              <p className="text-sm text-gray-700">
+                Buyers must order via{" "}
+                <span className="font-semibold text-[#1c2b3a]">
+                  "Negotiate"
+                </span>{" "}
+                for seller approval. If info isn't shown, go back, retry, and
+                resend the message.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Message input */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white border-t border-gray-200 p-4"
+      >
+        <form onSubmit={sendMessage} className="flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => handleChange(e)}
+            placeholder="Type your message..."
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1c2b3a] focus:border-transparent transition-colors"
+            disabled={isSending}
+          />
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            type="submit"
+            disabled={isSending || !input.trim()}
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+              !input.trim()
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-gradient-to-r from-[#fcecd8] to-[#1c2b3a] text-white"
+            }`}
+          >
+            {isSending ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Send size={18} />
+            )}
+            <span className="hidden sm:inline">Send</span>
+          </motion.button>
+        </form>
+      </motion.div>
+    </div>
+  );
+};
+
+export default ChatWindow;

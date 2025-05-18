@@ -1,0 +1,33 @@
+from rest_framework import serializers
+from .models import Product, Category
+from request.models import Request
+from user.models import CustomUser
+from cloudinary.uploader import upload
+
+class ProductSerializer(serializers.ModelSerializer):
+    categories = serializers.PrimaryKeyRelatedField(many = True, queryset = Category.objects.all())
+    request = serializers.PrimaryKeyRelatedField(queryset = Request.objects.all(), required=False, allow_null=True)
+    owner = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
+
+    class Meta:
+        model = Product
+        fields = ["id", "name", "price", "image", "imagefile", "owner", "stock", "categories", "created", "sold", "negotiable", "request", "used", "extra_field"]
+        extra_kwargs = {"created":{"read_only":True}, "sold":{"read_only":True}, "owner":{"read_only":True}}
+
+    def create(self, validated_data):
+        image_file = validated_data.get('imagefile')  # still upload image
+        result = upload(image_file)
+        validated_data['image'] = result.get('secure_url')
+
+        categories = validated_data.pop('categories', [])  # extract M2M field
+        product = Product.objects.create(**validated_data)  # create instance
+
+        product.categories.set(categories)  # set M2M after save
+        return product
+
+
+class CategorySerialzer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ["id", "name", "icon"]
+        extra_kwargs = {"name":{"read_only":True},"icon":{"read_only":True}}  
