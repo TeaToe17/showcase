@@ -1,164 +1,174 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import api from "@/lib/api"
-import { motion, AnimatePresence } from "framer-motion"
-import { AlertCircle, CheckCircle, Eye, EyeOff, Lock, Loader2, ArrowRight } from "lucide-react"
-import Link from "next/link"
+import type React from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import api from "@/lib/api";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  AlertCircle,
+  CheckCircle,
+  Eye,
+  EyeOff,
+  Lock,
+  Loader2,
+  ArrowRight,
+} from "lucide-react";
+import Link from "next/link";
 
-const ResetPassword = () => {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const uid = searchParams.get("uid")
-  const token = searchParams.get("token")
+const ResetPasswordContent = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const uid = searchParams.get("uid");
+  const token = searchParams.get("token");
 
-  const [password, setPassword] = useState<string>("")
-  const [confirmPassword, setConfirmPassword] = useState<string>("")
-  const [error, setError] = useState<string>("")
-  const [success, setSuccess] = useState<boolean>(false)
-  const [loading, setLoading] = useState<boolean>(false)
-  const [showPassword, setShowPassword] = useState<boolean>(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false)
-  const [passwordStrength, setPasswordStrength] = useState<number>(0)
+  const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState<boolean>(false);
+  const [passwordStrength, setPasswordStrength] = useState<number>(0);
   const [formErrors, setFormErrors] = useState({
     password: "",
     confirmPassword: "",
     general: "",
-  })
+  });
 
   // Check if uid and token are present
   useEffect(() => {
     if (!uid || !token) {
-      setError("Invalid password reset link. Please request a new one.")
+      setError("Invalid password reset link. Please request a new one.");
     }
-  }, [uid, token])
-
+  }, [uid, token]);
 
   // Calculate password strength
   useEffect(() => {
     if (!password) {
-      setPasswordStrength(0)
-      return
+      setPasswordStrength(0);
+      return;
     }
 
-    let strength = 0
+    let strength = 0;
     // Length check
-    if (password.length >= 8) strength += 1
+    if (password.length >= 8) strength += 1;
     // Contains number
-    if (/\d/.test(password)) strength += 1
+    if (/\d/.test(password)) strength += 1;
     // Contains lowercase
-    if (/[a-z]/.test(password)) strength += 1
+    if (/[a-z]/.test(password)) strength += 1;
     // Contains uppercase
-    if (/[A-Z]/.test(password)) strength += 1
+    if (/[A-Z]/.test(password)) strength += 1;
     // Contains special char
-    if (/[^A-Za-z0-9]/.test(password)) strength += 1
+    if (/[^A-Za-z0-9]/.test(password)) strength += 1;
 
-    setPasswordStrength(strength)
-  }, [password])
+    setPasswordStrength(strength);
+  }, [password]);
 
   const validateForm = () => {
     const errors = {
       password: "",
       confirmPassword: "",
       general: "",
-    }
-    let isValid = true
+    };
+    let isValid = true;
 
     // Password validation
     if (!password) {
-      errors.password = "Password is required"
-      isValid = false
+      errors.password = "Password is required";
+      isValid = false;
     } else if (password.length < 8) {
-      errors.password = "Password must be at least 8 characters"
-      isValid = false
+      errors.password = "Password must be at least 8 characters";
+      isValid = false;
     }
 
     // Confirm password validation
     if (!confirmPassword) {
-      errors.confirmPassword = "Please confirm your password"
-      isValid = false
+      errors.confirmPassword = "Please confirm your password";
+      isValid = false;
     } else if (password !== confirmPassword) {
-      errors.confirmPassword = "Passwords do not match"
-      isValid = false
+      errors.confirmPassword = "Passwords do not match";
+      isValid = false;
     }
 
-    setFormErrors(errors)
-    return isValid
-  }
+    setFormErrors(errors);
+    return isValid;
+  };
 
   const sendPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!uid || !token) {
-      setError("Invalid password reset link. Please request a new one.")
-      return
+      setError("Invalid password reset link. Please request a new one.");
+      return;
     }
 
     if (!validateForm()) {
-      return
+      return;
     }
 
-    setLoading(true)
-    setError("")
+    setLoading(true);
+    setError("");
 
-    const formData = new FormData()
-    formData.append("password", password)
-    formData.append("uid", uid.toString())
-    formData.append("token", token.toString())
+    const formData = new FormData();
+    formData.append("password", password);
+    formData.append("uid", uid.toString());
+    formData.append("token", token.toString());
 
     try {
       await api.post("user/password_reset/confirm/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
-      })
+      });
 
       // Show success message
-      setSuccess(true)
-      setPassword("")
-      setConfirmPassword("")
+      setSuccess(true);
+      setPassword("");
+      setConfirmPassword("");
 
       // Redirect to login after 3 seconds
       setTimeout(() => {
-        router.push("/login")
-      }, 3000)
+        router.push("/login");
+      }, 3000);
     } catch (err: any) {
-      console.error("Password reset error:", err)
+      console.error("Password reset error:", err);
 
       if (err.response?.data?.password) {
         setFormErrors({
           ...formErrors,
           password: err.response.data.password[0],
-        })
+        });
       } else if (err.response?.data?.non_field_errors) {
-        setError(err.response.data.non_field_errors[0])
+        setError(err.response.data.non_field_errors[0]);
       } else if (err.response?.data?.detail) {
-        setError(err.response.data.detail)
+        setError(err.response.data.detail);
       } else if (err.response?.data) {
         setError(
-          typeof err.response.data === "string" ? err.response.data : "Failed to reset password. Please try again.",
-        )
+          typeof err.response.data === "string"
+            ? err.response.data
+            : "Failed to reset password. Please try again."
+        );
       } else {
-        setError("Network error. Please check your connection and try again.")
+        setError("Network error. Please check your connection and try again.");
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const getStrengthLabel = () => {
-    if (passwordStrength === 0) return ""
-    if (passwordStrength <= 2) return "Weak"
-    if (passwordStrength <= 4) return "Medium"
-    return "Strong"
-  }
+    if (passwordStrength === 0) return "";
+    if (passwordStrength <= 2) return "Weak";
+    if (passwordStrength <= 4) return "Medium";
+    return "Strong";
+  };
 
   const getStrengthColor = () => {
-    if (passwordStrength === 0) return "bg-gray-200"
-    if (passwordStrength <= 2) return "bg-red-500"
-    if (passwordStrength <= 4) return "bg-yellow-500"
-    return "bg-green-500"
-  }
+    if (passwordStrength === 0) return "bg-gray-200";
+    if (passwordStrength <= 2) return "bg-red-500";
+    if (passwordStrength <= 4) return "bg-yellow-500";
+    return "bg-green-500";
+  };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-[#f8f9fa] p-4">
@@ -170,8 +180,13 @@ const ResetPassword = () => {
       >
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="bg-gradient-to-r from-[#fcecd8] to-[#1c2b3a]/10 p-6">
-            <h1 className="text-2xl font-bold text-[#1c2b3a]">Create New Password</h1>
-            <p className="text-gray-600 mt-2">Your new password must be different from previously used passwords.</p>
+            <h1 className="text-2xl font-bold text-[#1c2b3a]">
+              Create New Password
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Your new password must be different from previously used
+              passwords.
+            </p>
           </div>
 
           <div className="p-6">
@@ -199,15 +214,24 @@ const ResetPassword = () => {
                   <div className="bg-green-100 p-3 rounded-full mb-4">
                     <CheckCircle size={32} className="text-green-600" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Password Reset Successful</h3>
-                  <p className="mb-4">Your password has been reset successfully.</p>
-                  <p className="text-sm">You will be redirected to the login page in a few seconds.</p>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Password Reset Successful
+                  </h3>
+                  <p className="mb-4">
+                    Your password has been reset successfully.
+                  </p>
+                  <p className="text-sm">
+                    You will be redirected to the login page in a few seconds.
+                  </p>
                 </motion.div>
               ) : (
                 <form onSubmit={sendPassword} className="space-y-4">
                   {/* Password field */}
                   <div className="space-y-1">
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-gray-700"
+                    >
                       New Password
                     </label>
                     <div className="relative">
@@ -220,38 +244,52 @@ const ResetPassword = () => {
                         placeholder="Enter your new password"
                         value={password}
                         onChange={(e) => {
-                          setPassword(e.target.value)
+                          setPassword(e.target.value);
                           if (formErrors.password) {
-                            setFormErrors({ ...formErrors, password: "" })
+                            setFormErrors({ ...formErrors, password: "" });
                           }
                         }}
                         className={`w-full pl-10 pr-10 py-2 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1c2b3a] transition-colors ${
-                          formErrors.password ? "border-red-500" : "border-gray-300"
+                          formErrors.password
+                            ? "border-red-500"
+                            : "border-gray-300"
                         }`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
-                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
                       >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {showPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
                       </button>
                     </div>
-                    {formErrors.password && <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>}
+                    {formErrors.password && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {formErrors.password}
+                      </p>
+                    )}
 
                     {/* Password strength meter */}
                     {password && (
                       <div className="mt-2">
                         <div className="flex justify-between items-center mb-1">
-                          <span className="text-xs text-gray-500">Password strength:</span>
+                          <span className="text-xs text-gray-500">
+                            Password strength:
+                          </span>
                           <span
                             className={`text-xs font-medium ${
                               passwordStrength <= 2
                                 ? "text-red-500"
                                 : passwordStrength <= 4
-                                  ? "text-yellow-500"
-                                  : "text-green-500"
+                                ? "text-yellow-500"
+                                : "text-green-500"
                             }`}
                           >
                             {getStrengthLabel()}
@@ -260,20 +298,48 @@ const ResetPassword = () => {
                         <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
-                            animate={{ width: `${(passwordStrength / 5) * 100}%` }}
+                            animate={{
+                              width: `${(passwordStrength / 5) * 100}%`,
+                            }}
                             className={`h-full ${getStrengthColor()}`}
                           ></motion.div>
                         </div>
                         <ul className="mt-2 text-xs text-gray-500 space-y-1">
-                          <li className={password.length >= 8 ? "text-green-500" : ""}>• At least 8 characters</li>
-                          <li className={/[A-Z]/.test(password) ? "text-green-500" : ""}>
+                          <li
+                            className={
+                              password.length >= 8 ? "text-green-500" : ""
+                            }
+                          >
+                            • At least 8 characters
+                          </li>
+                          <li
+                            className={
+                              /[A-Z]/.test(password) ? "text-green-500" : ""
+                            }
+                          >
                             • At least one uppercase letter
                           </li>
-                          <li className={/[a-z]/.test(password) ? "text-green-500" : ""}>
+                          <li
+                            className={
+                              /[a-z]/.test(password) ? "text-green-500" : ""
+                            }
+                          >
                             • At least one lowercase letter
                           </li>
-                          <li className={/\d/.test(password) ? "text-green-500" : ""}>• At least one number</li>
-                          <li className={/[^A-Za-z0-9]/.test(password) ? "text-green-500" : ""}>
+                          <li
+                            className={
+                              /\d/.test(password) ? "text-green-500" : ""
+                            }
+                          >
+                            • At least one number
+                          </li>
+                          <li
+                            className={
+                              /[^A-Za-z0-9]/.test(password)
+                                ? "text-green-500"
+                                : ""
+                            }
+                          >
                             • At least one special character
                           </li>
                         </ul>
@@ -283,7 +349,10 @@ const ResetPassword = () => {
 
                   {/* Confirm Password field */}
                   <div className="space-y-1">
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor="confirmPassword"
+                      className="block text-sm font-medium text-gray-700"
+                    >
                       Confirm Password
                     </label>
                     <div className="relative">
@@ -296,26 +365,43 @@ const ResetPassword = () => {
                         placeholder="Confirm your new password"
                         value={confirmPassword}
                         onChange={(e) => {
-                          setConfirmPassword(e.target.value)
+                          setConfirmPassword(e.target.value);
                           if (formErrors.confirmPassword) {
-                            setFormErrors({ ...formErrors, confirmPassword: "" })
+                            setFormErrors({
+                              ...formErrors,
+                              confirmPassword: "",
+                            });
                           }
                         }}
                         className={`w-full pl-10 pr-10 py-2 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1c2b3a] transition-colors ${
-                          formErrors.confirmPassword ? "border-red-500" : "border-gray-300"
+                          formErrors.confirmPassword
+                            ? "border-red-500"
+                            : "border-gray-300"
                         }`}
                       />
                       <button
                         type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                         className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
-                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                        aria-label={
+                          showConfirmPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
                       >
-                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {showConfirmPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
                       </button>
                     </div>
                     {formErrors.confirmPassword && (
-                      <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword}</p>
+                      <p className="text-red-500 text-xs mt-1">
+                        {formErrors.confirmPassword}
+                      </p>
                     )}
                   </div>
 
@@ -346,7 +432,10 @@ const ResetPassword = () => {
               <div className="mt-6 text-center text-sm">
                 <p className="text-gray-600">
                   Remember your password?{" "}
-                  <Link href="/login" className="text-[#1c2b3a] font-medium hover:underline">
+                  <Link
+                    href="/login"
+                    className="text-[#1c2b3a] font-medium hover:underline"
+                  >
                     Back to Login
                   </Link>
                 </p>
@@ -356,7 +445,19 @@ const ResetPassword = () => {
         </div>
       </motion.div>
     </div>
-  )
-}
+  );
+};
 
-export default ResetPassword
+const ResetPassword = () => (
+  <Suspense
+    fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
+      </div>
+    }
+  >
+    <ResetPasswordContent />
+  </Suspense>
+);
+
+export default ResetPassword;
