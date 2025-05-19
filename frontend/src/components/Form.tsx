@@ -164,6 +164,7 @@ const Form = ({ route, method }: FormProps) => {
 
       // Handle specific error cases
       if (error.response) {
+        console.log(error)
         const status = error.response.status
         const data = error.response.data
 

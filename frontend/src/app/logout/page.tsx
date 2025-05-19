@@ -1,43 +1,47 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { useAppContext } from "@/context"
-import { motion } from "framer-motion"
-import { LogIn, CheckCircle, Loader2, AlertCircle } from "lucide-react"
-import Link from "next/link"
-import { ACCESS_TOKEN } from "@/lib/constant"
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useAppContext } from "@/context";
+import { motion } from "framer-motion";
+import { LogIn, CheckCircle, Loader2, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { ACCESS_TOKEN } from "@/lib/constant";
 
 const Logout = () => {
-  const { setIsLoggedIn, isLoggedIn } = useAppContext()
-  const router = useRouter()
-  const [countdown, setCountdown] = useState(5)
-  const [isRedirecting, setIsRedirecting] = useState(false)
+  const { setIsLoggedIn, isLoggedIn } = useAppContext();
+  const router = useRouter();
+  const [countdown, setCountdown] = useState(5);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Clear localStorage and update app context
-  if (typeof window !== "undefined") {localStorage.clear()}
-  setIsLoggedIn(false)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.clear();
+    }
+    setIsLoggedIn(false);
+  }, []);
 
   // Set up countdown timer
   useEffect(() => {
     const timer = setInterval(() => {
-      setCountdown((prev) => prev - 1)
-    }, 1000)
+      setCountdown((prev) => prev - 1);
+    }, 1000);
 
     // Clean up timer on unmount
-    return () => clearInterval(timer)
-  }, [])
+    return () => clearInterval(timer);
+  }, []);
 
   // Handle redirect when countdown reaches zero
   useEffect(() => {
     if (countdown <= 0) {
-      setIsRedirecting(true)
+      setIsRedirecting(true);
       // Use setTimeout to avoid state updates during rendering
       setTimeout(() => {
-        router.push("/login")
-      }, 0)
+        router.push("/login");
+      }, 0);
     }
-  }, [countdown, router])
+  }, [countdown, router]);
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-[#f8f9fa] p-4">
@@ -110,7 +114,7 @@ const Logout = () => {
         </div>
       </motion.div>
     </div>
-  )
-}
+  );
+};
 
-export default Logout
+export default Logout;

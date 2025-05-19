@@ -418,7 +418,7 @@ const MyProducts = () => {
                     </div>
                     <input
                       id="price"
-                      type="number"
+                      type="text"
                       placeholder="0.00"
                       value={price}
                       onChange={(e) => setPrice(Number(e.target.value))}
@@ -484,7 +484,6 @@ const MyProducts = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  required
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1c2b3a] focus:border-transparent transition-colors"
                 />
               </div>

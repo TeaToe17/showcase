@@ -28,7 +28,7 @@ const Product = ({ product }: Productprops) => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="relative h-40 overflow-hidden rounded-lg">
+      <div className="relative h-64 overflow-hidden rounded-lg">
         <Image
           src={imageUrl || "/placeholder.svg"}
           alt={product.name}

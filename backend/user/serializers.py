@@ -8,19 +8,26 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 from .models import CustomUser, UserFCMToken, Message, ChatRoom, ChatPreview
+from product.models import Category
 
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(allow_blank=True, required=False)
     password = serializers.CharField(allow_blank=True, required=False)
-    
+    categories = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), many=True, required=False
+    )
+
     class Meta:
         model = CustomUser
         fields = ["id", "username", "password", "email", "whatsapp", "call", "categories"]
-        extra_kwargs = {"password":{"write_only":True},}
+        extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
-        user = CustomUser.objects.create_user(**validated_data)
+        categories = validated_data.pop("categories", [])
+        user = CustomUser.objects.create(**validated_data)
+        user.categories.set(categories)
         return user
+
     
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod

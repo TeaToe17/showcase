@@ -5,7 +5,7 @@ class CustomUser(AbstractUser):
     email = models.EmailField(blank=True, null=True)
     whatsapp = models.CharField(max_length=20, blank=True, null=True)
     call = models.CharField(max_length=20, null=True, blank=True)
-    categories = models.ManyToManyField("product.Category", related_name="users") 
+    categories = models.ManyToManyField("product.Category", related_name="users", null=True, blank=True) 
     contact_violation_count = models.PositiveIntegerField(default=0)
     suspension_until = models.DateTimeField(null=True, blank=True)
     is_blacklisted = models.BooleanField(default=False)

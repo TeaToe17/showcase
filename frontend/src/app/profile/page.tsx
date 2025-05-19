@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation"
 import { fetchUser, fetchCategories } from "@/lib/utils"
 import api from "@/lib/api"
 import Image from "next/image"
-import { motion } from "framer-motion"
-import { Edit, Save, Loader2 } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Edit, Save, Loader2, AlertCircle, CheckCircle, X } from "lucide-react"
 
 interface CustomUser {
   id: number
@@ -17,6 +17,11 @@ interface CustomUser {
   image: string
   email: string
   categories: number[]
+}
+
+interface Message {
+  type: "success" | "error"
+  text: string
 }
 
 const Profile = () => {
@@ -32,6 +37,7 @@ const Profile = () => {
   const [categories, setCategories] = useState<{ id: number; name: string }[]>([])
   const [selectedCategories, setSelectedCategories] = useState<number[]>([])
   const [categoryNames, setCategoryNames] = useState<{ [key: number]: string }>({})
+  const [message, setMessage] = useState<Message | null>(null)
 
   const handleEdit = () => {
     if (!user) return
@@ -57,6 +63,7 @@ const Profile = () => {
     if (!user) return
 
     setIsSubmitting(true)
+    setMessage(null)
 
     const formData = new FormData()
     formData.append("username", username)
@@ -71,12 +78,22 @@ const Profile = () => {
       await api.put(`user/update_user/${user.id}/`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       })
-      alert("Profile updated successfully! You will be redirected to login again.")
+      setMessage({
+        type: "success",
+        text: "Profile updated successfully! You will be redirected to login again.",
+      })
       resetForm()
-      router.push("/logout")
+
+      // Delay redirect to allow user to see the success message
+      setTimeout(() => {
+        router.push("/logout")
+      }, 2000)
     } catch (error) {
       console.error("Error updating profile:", error)
-      alert("Failed to update profile. Please try again.")
+      setMessage({
+        type: "error",
+        text: "Failed to update profile. Please try again.",
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -89,6 +106,10 @@ const Profile = () => {
       setUser(data)
     } catch (err) {
       console.error("Failed to load user:", err)
+      setMessage({
+        type: "error",
+        text: "Failed to load profile data. Please try again.",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -96,7 +117,7 @@ const Profile = () => {
 
   const loadCategories = async () => {
     try {
-      const data:{id:number,name:string}[] = await fetchCategories()
+      const data: { id: number; name: string }[] = await fetchCategories()
       setCategories(data)
 
       // Create a map of category IDs to names
@@ -118,7 +139,33 @@ const Profile = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-[#f4f1ed] p-5">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md relative">
+        {/* Message notification */}
+        <AnimatePresence>
+          {message && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className={`absolute top-4 left-4 right-4 p-3 rounded-md shadow-md flex items-start gap-2 z-10 ${
+                message.type === "success"
+                  ? "bg-green-50 border border-green-200 text-green-700"
+                  : "bg-red-50 border border-red-200 text-red-700"
+              }`}
+            >
+              {message.type === "success" ? (
+                <CheckCircle size={18} className="flex-shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+              )}
+              <p className="flex-1 text-sm">{message.text}</p>
+              <button onClick={() => setMessage(null)} className="text-gray-500 hover:text-gray-700" aria-label="Close">
+                <X size={16} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {isLoading ? (
           <div className="flex justify-center items-center py-10">
             <Loader2 className="w-8 h-8 text-gray-500 animate-spin" />
@@ -247,6 +294,7 @@ const Profile = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Categories of Interest</label>
                     <select
                       multiple
+                      required
                       value={selectedCategories.map(String)}
                       onChange={(e) =>
                         setSelectedCategories(Array.from(e.target.selectedOptions).map((opt) => Number(opt.value)))
