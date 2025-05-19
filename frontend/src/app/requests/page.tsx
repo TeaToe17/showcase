@@ -122,9 +122,9 @@ const Requests = () => {
 
   const CreateProduct = (request: Request) => {
     if (isLoggedIn) {
-      router.push(`/mybooks/${request.id}/`)
+      router.push(`/myproducts/${request.id}/`)
     } else {
-      setUrl("mybooks/" + request.id)
+      setUrl("myproducts/" + request.id)
       router.push(`/login/`)
     }
   }

@@ -11,10 +11,18 @@ import {
   fetchUser,
   getDecodedToken,
 } from "@/lib/utils";
-import { Home, ArrowLeft, Heart, Share2 } from "lucide-react";
+import {
+  Home,
+  ArrowLeft,
+  Heart,
+  Share2,
+  X,
+  AlertCircle,
+  CheckCircle,
+} from "lucide-react";
 import { ACCESS_TOKEN } from "@/lib/constant";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface CustomUser {
   id: number;
@@ -50,6 +58,11 @@ interface Product {
   owner: number;
 }
 
+interface Message {
+  type: "success" | "error";
+  text: string;
+}
+
 const ProductDetails = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -60,6 +73,7 @@ const ProductDetails = () => {
     useState<{ id: number; name: string }[]>();
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState<Message | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -98,8 +112,12 @@ const ProductDetails = () => {
   const HandleOrder = async () => {
     try {
       const user: CustomUser = await fetchUser();
-      if (!user) {
-        alert("Invalid user information. Please log in again.");
+      console.log("Fetched user:", user);
+      if (!user || !user.id) {
+        setMessage({
+          type: "error",
+          text: "Invalid user information. Please log in again.",
+        });
         setUrl(pathname);
         router.push("/login");
         return;
@@ -117,7 +135,10 @@ const ProductDetails = () => {
       try {
         console.log(formData);
         await api.post("order/create/", formData);
-        alert("Order successfully placed!");
+        setMessage({
+          type: "success",
+          text: "Order successfully placed!",
+        });
         router.push(
           `https://wa.me/2347046938727?text=Hello%20I%20am%20${encodeURIComponent(
             user.name
@@ -127,11 +148,16 @@ const ProductDetails = () => {
         );
       } catch (apiError) {
         console.error("API Error:", apiError);
-        alert("Error placing the order. Please try again.");
+        setMessage({
+          type: "error",
+          text: "Error placing the order. Please try again.",
+        });
       }
     } catch (error) {
-      console.error("Unexpected error in HandleOrder:", error);
-      alert("An unexpected error occurred. Please try again.");
+      setMessage({
+        type: "error",
+        text: "An unexpected error occurred. Login and try again.",
+      });
     }
   };
 
@@ -206,6 +232,35 @@ const ProductDetails = () => {
           </button>
         </div>
       </div>
+
+      <AnimatePresence>
+        {message && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`absolute top-4 left-4 right-4 p-3 rounded-md shadow-md flex items-start gap-2 z-30 ${
+              message.type === "success"
+                ? "bg-green-50 border border-green-200 text-green-700"
+                : "bg-red-50 border border-red-200 text-red-700"
+            }`}
+          >
+            {message.type === "success" ? (
+              <CheckCircle size={18} className="flex-shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+            )}
+            <p className="flex-1 text-sm">{message.text}</p>
+            <button
+              onClick={() => setMessage(null)}
+              className="text-gray-500 hover:text-gray-700"
+              aria-label="Close"
+            >
+              <X size={16} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <div className="flex flex-col lg:flex-row">

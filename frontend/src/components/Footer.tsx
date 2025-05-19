@@ -192,7 +192,7 @@ function Footer() {
                 </li>
                 <li className="flex items-center">
                   <Mail size={18} className="mr-2 flex-shrink-0 text-[#1c2b3a]" />
-                  <span className="text-sm">info@jale.ng</span>
+                  <span className="text-sm">titobiloluwaa83@gmail.com</span>
                 </li>
               </ul>
               <div className="mt-4 p-3 bg-white/50 rounded-lg">

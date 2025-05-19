@@ -24,7 +24,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         categories = validated_data.pop("categories", [])
-        user = CustomUser.objects.create(**validated_data)
+        user = CustomUser.objects.create_user(**validated_data)
         user.categories.set(categories)
         return user
 

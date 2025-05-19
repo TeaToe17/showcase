@@ -440,7 +440,7 @@ const MyProducts = () => {
                     </div>
                     <input
                       id="stock"
-                      type="number"
+                      type="text"
                       placeholder="Quantity"
                       value={stock}
                       onChange={(e) => setStock(Number(e.target.value))}
