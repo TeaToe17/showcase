@@ -11,7 +11,7 @@ from .models import CustomUser, UserFCMToken, Message, ChatRoom, ChatPreview
 
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(allow_blank=True, required=False)
-    password = serializers.EmailField(allow_blank=True, required=False)
+    password = serializers.CharField(allow_blank=True, required=False)
     
     class Meta:
         model = CustomUser
