@@ -91,7 +91,7 @@ function Footer() {
               <h3 className="font-bold text-lg mb-4 border-b border-[#1c2b3a]/20 pb-2">Quick Links</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/about" className="text-sm flex items-center hover:text-[#1c2b3a]/70 transition-colors">
+                  <Link href="/" className="text-sm flex items-center hover:text-[#1c2b3a]/70 transition-colors">
                     <ChevronRight size={14} className="mr-1" />
                     About Us
                   </Link>
@@ -112,7 +112,7 @@ function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/faq" className="text-sm flex items-center hover:text-[#1c2b3a]/70 transition-colors">
+                  <Link href="/" className="text-sm flex items-center hover:text-[#1c2b3a]/70 transition-colors">
                     <ChevronRight size={14} className="mr-1" />
                     FAQ
                   </Link>
@@ -206,13 +206,13 @@ function Footer() {
           {/* Bottom Footer */}
           <div className="pt-6 border-t border-[#1c2b3a]/20 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex space-x-6 text-xs font-medium">
-              <Link href="/terms" className="hover:underline">
+              <Link href="/" className="hover:underline">
                 Terms of Service
               </Link>
-              <Link href="/privacy" className="hover:underline">
+              <Link href="/" className="hover:underline">
                 Privacy Policy
               </Link>
-              <Link href="/shipping" className="hover:underline">
+              <Link href="/" className="hover:underline">
                 Shipping Policy
               </Link>
             </div>

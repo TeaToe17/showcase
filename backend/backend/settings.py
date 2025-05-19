@@ -261,6 +261,10 @@ USE_TZ = True
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWS_CREDENTIAL = True
 
+CORS_ALLOWED_ORIGINS = [
+    "https://jalev1.vercel.app",
+]
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 STATIC_URL = '/static/'
