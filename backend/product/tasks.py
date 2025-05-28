@@ -15,21 +15,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
-# def delete_product_after_7_days():
-#     Product = apps.get_model("product", "Product")
-#     products = Product.objects.filter(sold=True, datesold__isnull=False)
-#     for product in products:
-#         logger.info(f"Task running for Product ID: {product.id}")
-#         logger.info(f"Product sold: {product.sold}, Date sold: {product.datesold}, Now: {now()}")
-
-#         if now() >= (product.datesold + timedelta(days=7)):
-#             logger.info(f"Deleted product with ID: {product.id} and Name: {product.name}")
-#             product.delete()
-#         else:
-#             logger.info(f"Product not eligible for deletion: {product.name} (ID: {product.id})")
-
-
 def send_email(to_email, subject, message):
     from_email = "titobiloluwaa83@gmail.com"
     password = os.getenv("EMAIL_HOST_PASSWORD")  # Use app-specific password here
@@ -95,7 +80,6 @@ def browser_notify(user_Id, subject, message, url):
                 token=userToken
             )
             response = messaging.send(message_obj)
-
 
         logger.info(f"Notification Sent: {response}")
 

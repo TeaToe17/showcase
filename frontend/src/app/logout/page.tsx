@@ -67,9 +67,7 @@ const Logout = () => {
           </h1>
 
           <p className="text-gray-600 mb-6">
-            {!isLoggedIn
-              ? "You were not logged in. No action was needed."
-              : "Thank you for using Jàle. You have been securely logged out of your account."}
+            Thank you for using Jàle. You have been securely logged out of your account.
           </p>
 
           <div className="mb-6 bg-[#f8f9fa] rounded-lg p-4 flex flex-col items-center">

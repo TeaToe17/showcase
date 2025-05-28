@@ -4,12 +4,13 @@ import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
-import { useGlobalListener } from "@/lib/utils"
+import { useGlobalListener, fetchUser } from "@/lib/utils"
 import { useAppContext } from "@/context"
 import Image from "next/image"
 import api, { logout } from "@/lib/api"
-import { Menu, X, Home, Inbox, User } from "lucide-react"
+import { Menu, X, Home, MessageSquareMore , User, HandCoins  } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { ACCESS_TOKEN } from "@/lib/constant"
 
 type Message = {
   sender_id: number
@@ -18,15 +19,46 @@ type Message = {
   created_at: string
 }
 
+type ChatPreview = {
+  sender: number
+  receiver: number
+  latest_message: string
+  time: string
+  unread: number
+  actual_sender: number
+  actual_receiver: number
+}
+
 const Navbar = () => {
   const router = useRouter()
   const pathname = usePathname()
   const dropdownRef = useRef<HTMLDivElement | null>(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { globalMessages, isLoggedIn } = useAppContext()
+  const {
+    globalMessages,
+    isLoggedIn,
+    messageCount,
+    setMessageCount,
+    chats,
+    setChats,
+    currentUser,
+    setCurrentUser,
+    messageTrigger,
+    setMessageTrigger,
+  } = useAppContext()
 
   useGlobalListener()
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const data = await fetchUser()
+      if (data) {
+        setCurrentUser(data)
+      }
+    }
+    loadUser()
+  }, [])
 
   useEffect(() => {
     if (pathname === `chat/${globalMessages?.receiver_id}`) return
@@ -72,15 +104,66 @@ const Navbar = () => {
     setMobileMenuOpen(false)
   }, [pathname])
 
+  // Fetch chat previews when messageTrigger is true
+  useEffect(() => {
+    if (!messageTrigger || !isLoggedIn) return
+
+    const token = localStorage.getItem(ACCESS_TOKEN)
+    if (token) {
+      const fetchPreview = async () => {
+        try {
+          console.log("fetched chat previews for navbar")
+          const res = await api.get("user/chatpreview/list/")
+          const data: ChatPreview[] = res.data
+
+          setChats(data)
+          // Reset the trigger after successful fetch
+          setMessageTrigger(false)
+        } catch (error: any) {
+          console.error("Error fetching chat previews:", error)
+          // Reset trigger even on error to prevent infinite loops
+          setMessageTrigger(false)
+        }
+      }
+      fetchPreview()
+    }
+  }, [messageTrigger, isLoggedIn, setChats, setMessageTrigger])
+
+  // Update message count when chats change
+  useEffect(() => {
+    if (chats.length < 1 || !currentUser) return
+
+    const user_id = Number(currentUser.id)
+
+    const count = chats.reduce((acc, chat) => {
+      const sender = Number(chat.actual_sender)
+      if (sender !== user_id && !!chat.unread) {
+        return acc + 1
+      }
+      return acc
+    }, 0)
+
+    setMessageCount(count)
+  }, [chats, currentUser, setMessageCount])
+
   const navItems = isLoggedIn ? (
     <>
       <NavItem href="/" icon={<Home className="w-5 h-5" />} label="Home" />
-      <NavItem href="/requests" label="Requests" />
+      <NavItem href="/requests" icon={<HandCoins className="w-5 h-5"/>} label="Requests" />
       <NavItem
         href="/messages"
-        icon={<Inbox className="w-5 h-5" />}
         label="Messages"
         onClick={() => router.push("/messages")}
+        icon={
+          <div className="relative">
+            <MessageSquareMore  className="w-5 h-5" />
+            {messageCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold px-1 rounded-full">
+                {messageCount}
+              </span>
+            )}
+          </div>
+        }
       />
       <li className="relative">
         <button
@@ -155,7 +238,18 @@ const Navbar = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <span className="relative">
+                  <Menu className="w-6 h-6" />
+                  {messageCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold px-1 rounded-full">
+                      {messageCount}
+                    </span>
+                  )}
+                </span>
+              )}
             </motion.div>
           </AnimatePresence>
         </button>

@@ -26,7 +26,8 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
-  const { currentProduct, setCurrentProduct } = useAppContext();
+  const { currentProduct, setCurrentProduct, setMessageTrigger } =
+    useAppContext();
   const [productId, setProductId] = useState<number | string>("");
   const [ownerId, setOwnerId] = useState<number | string>("");
   const [agreedPrice, setAgreedPrice] = useState<number | string>("");
@@ -71,7 +72,7 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
           text: msg.content,
           sender_id: msg.sender,
           // created_at: msg.timestamp,
-          created_at: formatTime(msg.timestamp)
+          created_at: formatTime(msg.timestamp),
         }));
         setMessages(formattedMessage);
       }
@@ -81,7 +82,7 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
       setCurrentUser(user);
     } catch (error: any) {
       console.error("Failed to fetch chat history", error);
-      setError("Failed to load chat history. Please login and try again.");
+      setError("Failed to load chat history, refresh.");
     } finally {
       setIsLoading(false);
     }
@@ -146,7 +147,7 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
         };
 
         socket.onerror = () => {
-          setError("Connection error. Please refresh the page.");
+          // setError("Please refresh the page.");
         };
 
         socket.onclose = () => {
@@ -186,6 +187,28 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
     }
   }, [messages]);
 
+  useEffect(() => {
+    if (!messages.length || !currentUser?.id) return;
+
+    const last_msg = messages.at(-1);
+    const lastSenderId = Number(last_msg?.sender_id);
+    const currentUserId = Number(currentUser?.id);
+
+    // Only mark as read if the last message was sent by someone else
+    if (lastSenderId && currentUserId && lastSenderId !== currentUserId) {
+      // Mark messages as read on backend
+      api
+        .post(`user/update_messages/${receiverId}/`)
+        .then(() => {
+          // Only trigger context update after successful backend update
+          setMessageTrigger(true);
+        })
+        .catch((error) => {
+          console.error("Failed to mark messages as read:", error);
+        });
+    }
+  }, [messages, currentUser?.id, receiverId, setMessageTrigger]);
+
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
@@ -200,7 +223,7 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
     if (ownerId && productId) {
       const confirmSeller = async () => {
         const user = await fetchUser();
-        if (user.id == ownerId) {
+        if (user?.id == ownerId) {
           setIsProductOwner(true);
         }
       };
@@ -244,7 +267,7 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
     setError(null);
     try {
       const user = await fetchUser();
-
+      if (!user) return;
       const formData = new FormData();
       formData.append(
         "product",
@@ -285,66 +308,6 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
       setIsSending(false);
     }
   };
-
-  // const handleOrder = async () => {
-  //   if (!agreedPrice) {
-  //     setError("Please enter an agreed price");
-  //     return;
-  //   }
-
-  //   if (!isProductOwner) {
-  //     setError(
-  //       "Only the seller can authorize orders. Make sure you're navigating here through the product."
-  //     );
-  //     return;
-  //   }
-
-  //   setIsSending(true);
-  //   setError(null);
-
-  //   try {
-  //     const user = await fetchUser();
-
-  //     const formData = new FormData();
-  //     formData.append(
-  //       "product",
-  //       currentProduct?.id.toString() ?? "Missing Book ID"
-  //     );
-  //     formData.append("agreed_price", agreedPrice.toString());
-  //     formData.append("buyer_name", user.name ?? "Missing Name");
-  //     formData.append(
-  //       "buyer_whatsapp_contact",
-  //       user.whatsapp ?? "Missing WhatsApp"
-  //     );
-  //     formData.append("buyer_call_contact", user.call ?? "Missing Call");
-
-  //     await api.post("order/create/", formData);
-
-  //     // Show success message
-  //     setShowOrderSuccess(true);
-
-  //     // Send message to chat
-  //     sendAdminMessage("Deal Approved");
-
-  //     // Reset product state
-  //     setCurrentProduct(null);
-  //     localStorage.removeItem("productId");
-
-  //     // Redirect to WhatsApp
-  //     router.push(
-  //       `https://wa.me/2347046938727?text=Hello%20I%20am%20${encodeURIComponent(
-  //         user.name
-  //       )},%0AI%20just%20concluded%20an%20order%20for%20${encodeURIComponent(
-  //         currentProduct?.name ?? ""
-  //       )}%20(${currentProduct?.id})`
-  //     );
-  //   } catch (error: any) {
-  //     console.error("Unexpected error in HandleOrder:", error);
-  //     setError("An unexpected error occurred. Please try again.");
-  //   } finally {
-  //     setIsSending(false);
-  //   }
-  // };
 
   // Send message
   const sendMessage = (e?: React.FormEvent) => {

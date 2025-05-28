@@ -1,151 +1,145 @@
-"use client"
+"use client";
 
-import { useAppContext } from "@/context"
-import api from "@/lib/api"
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
-import { User, Clock, AlertCircle, Search, Loader2, MessageSquareOff } from "lucide-react"
-import { IsUser, getDecodedToken } from "@/lib/utils"
+import { useAppContext } from "@/context";
+import api from "@/lib/api";
+import { act, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  User,
+  Clock,
+  AlertCircle,
+  Search,
+  Loader2,
+  MessageSquareOff,
+} from "lucide-react";
+import { IsUser, getDecodedToken, fetchUser } from "@/lib/utils";
 
 type ChatPreview = {
-  sender: number
-  receiver: number
-  latest_message: string
-  time: string
-}
+  sender: number;
+  receiver: number;
+  latest_message: string;
+  time: string;
+  unread: number;
+  actual_sender: number;
+  actual_receiver: number;
+};
 
 type Message = {
-  sender_id: number
-  receiver_id: number
-  text: string
-  created_at: string
-}
-
-interface CustomUser {
-  id: number
-  name: string
-  whatsapp: string
-  call: string
-}
-
-interface DecodedToken {
-  CustomUser: CustomUser
-  exp: number
-  iat: number
-  jti: string
-  token_type: string
-  user_id: number
-}
+  sender_id: number;
+  receiver_id: number;
+  text: string;
+  created_at: string;
+};
 
 const Messages = () => {
-  const router = useRouter()
+  const router = useRouter();
   const [chatBar, setChatBar] = useState<ChatPreview>({
     sender: 0,
     receiver: 0,
     latest_message: "",
     time: "",
-  })
-  const [chats, setChats] = useState<ChatPreview[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const { globalMessages }: { globalMessages: Message | undefined } = useAppContext()
+    unread: 0,
+    actual_sender: 0,
+    actual_receiver: 0,
+  });
+  // const [chats, setChats] = useState<ChatPreview[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { globalMessages }: { globalMessages: Message | undefined } =
+    useAppContext();
+  const {
+    setMessageCount,
+    chats,
+    setChats,
+    currentUser,
+    setCurrentUser,
+    setMessageTrigger,
+  } = useAppContext();
 
   const formatTime = (timeString: string) => {
     try {
-      const date = new Date(timeString)
-      const now = new Date()
-      const diffMs = now.getTime() - date.getTime()
-      const diffMins = Math.floor(diffMs / 60000)
-      const diffHours = Math.floor(diffMins / 60)
-      const diffDays = Math.floor(diffHours / 24)
+      const date = new Date(timeString);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMins / 60);
+      const diffDays = Math.floor(diffHours / 24);
 
-      if (diffMins < 1) return "Just now"
-      if (diffMins < 60) return `${diffMins}m ago`
-      if (diffHours < 24) return `${diffHours}h ago`
-      if (diffDays < 7) return `${diffDays}d ago`
+      if (diffMins < 1) return "Just now";
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays < 7) return `${diffDays}d ago`;
 
       return date.toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
-      })
+      });
     } catch (e) {
-      return timeString || "Unknown time"
+      return timeString || "Unknown time";
     }
-  }
+  };
 
   const fetchPreviews = async () => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
 
-    const decodedToken = getDecodedToken()
+    const decodedToken = getDecodedToken();
     if (decodedToken) {
       try {
-        const res = await api.get("user/chatpreview/list/")
-        const data: ChatPreview[] = res.data
-
-        // Process the data
-        data.forEach((message) => {
-          if (message.sender == decodedToken.user_id) {
-            message.sender = message.receiver
-          }
-        })
-
-        setChats(res.data)
+        const res = await api.get("user/chatpreview/list/");
+        const data: ChatPreview[] = res.data;
+        console.log(res.data);
+        setChats(res.data);
       } catch (error: any) {
-        console.error(error)
-        setError(error.response?.data?.message || "Failed to load messages")
+        console.error(error);
+        setError(error.response?.data?.message || "Failed to load messages");
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     } else {
-      setIsLoading(false)
-      setError("You need to be logged in to view messages")
+      setIsLoading(false);
+      setError("You need to be logged in to view messages");
     }
-  }
+  };
 
   useEffect(() => {
-    const decoded = getDecodedToken()
-    if (!globalMessages || !decoded) return
+    const decoded = getDecodedToken();
+    if (!globalMessages || !decoded) return;
 
     try {
-      const { sender_id, receiver_id, text, created_at } = globalMessages
-
-      const otherPerson = [sender_id, receiver_id].find((id) => Number(id) !== Number(decoded.user_id))
-
-      if (otherPerson) {
-        setChatBar({
-          sender: otherPerson,
-          receiver: receiver_id,
-          latest_message: text,
-          time: created_at,
-        })
-      }
+      const { sender_id, receiver_id, text, created_at } = globalMessages;
     } catch (error) {
-      console.error("Error decoding token or processing globalMessages:", error)
+      console.error(
+        "Error decoding token or processing globalMessages:",
+        error
+      );
     }
-  }, [globalMessages])
+  }, [globalMessages]);
 
   useEffect(() => {
-    if (chatBar.latest_message === "") return
-    const filtered = chats.filter((chat) => chat.sender !== chatBar.sender)
-    const updatedChats: ChatPreview[] = [chatBar, ...filtered]
-    setChats(updatedChats)
-  }, [chatBar])
+    // To ensure most recent chats stay upat the top and remove duplicates
+    if (chatBar.latest_message === "") return;
+    const filtered = chats.filter((chat) => chat.sender !== chatBar.sender);
+    const updatedChats: ChatPreview[] = [chatBar, ...filtered];
+    setChats(updatedChats);
+  }, [chatBar]);
 
   useEffect(() => {
-    fetchPreviews()
-  }, [])
+    fetchPreviews();
+  }, [globalMessages]);
 
   // Filter chats based on search query
   const filteredChats = searchQuery
     ? chats.filter(
         (chat) =>
-          chat.latest_message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          String(chat.sender).includes(searchQuery),
+          chat.latest_message
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          String(chat.sender).includes(searchQuery)
       )
-    : chats
+    : chats;
 
   // Animation variants
   const containerVariants = {
@@ -156,7 +150,7 @@ const Messages = () => {
         staggerChildren: 0.1,
       },
     },
-  }
+  };
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -169,7 +163,7 @@ const Messages = () => {
         damping: 24,
       },
     },
-  }
+  };
 
   if (!IsUser) {
     return (
@@ -184,8 +178,12 @@ const Messages = () => {
               <AlertCircle size={32} className="text-red-500" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-[#1c2b3a] mb-2">Login Required</h2>
-          <p className="text-gray-600 mb-6">You need to be logged in to view your messages.</p>
+          <h2 className="text-2xl font-bold text-[#1c2b3a] mb-2">
+            Login Required
+          </h2>
+          <p className="text-gray-600 mb-6">
+            You need to be logged in to view your messages.
+          </p>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -196,7 +194,7 @@ const Messages = () => {
           </motion.button>
         </motion.div>
       </div>
-    )
+    );
   }
 
   return (
@@ -273,7 +271,10 @@ const Messages = () => {
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(5)].map((_, index) => (
-              <div key={index} className="bg-white rounded-xl p-4 animate-pulse">
+              <div
+                key={index}
+                className="bg-white rounded-xl p-4 animate-pulse"
+              >
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
                   <div className="flex-1">
@@ -286,13 +287,30 @@ const Messages = () => {
             ))}
           </div>
         ) : filteredChats.length > 0 ? (
-          <motion.div initial="hidden" animate="visible" variants={containerVariants} className="space-y-3">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+            className="space-y-3"
+          >
             {filteredChats.map((chat) => (
               <motion.div
-                key={chat.sender}
+                key={chat.actual_sender}
                 variants={itemVariants}
-                whileHover={{ y: -3, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-                onClick={() => router.push(`/chat/${chat.sender}`)}
+                whileHover={{
+                  y: -3,
+                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
+                }}
+                onClick={() => {
+                  // setMessageTrigger(true);
+                  router.push(
+                    `/chat/${
+                      Number(chat.actual_sender) == Number(currentUser?.id)
+                        ? chat.actual_receiver
+                        : chat.actual_sender
+                    }`
+                  );
+                }}
                 className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all cursor-pointer"
               >
                 <div className="p-4 flex items-center gap-3">
@@ -301,13 +319,29 @@ const Messages = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-1">
-                      <h3 className="font-semibold text-[#1c2b3a] truncate">User #{chat.sender}</h3>
-                      <span className="text-xs text-gray-500 flex items-center gap-1 whitespace-nowrap">
-                        <Clock size={12} />
-                        {chat.time}
-                      </span>
+                      <h3 className="font-semibold text-[#1c2b3a] truncate">
+                        User #
+                        {Number(chat.actual_sender) == Number(currentUser?.id)
+                          ? chat.actual_receiver
+                          : chat.actual_sender}
+                      </h3>
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-500 flex items-center gap-1 whitespace-nowrap">
+                          <Clock size={12} />
+                          {chat.time}
+                        </span>
+                        {Number(chat.actual_sender) !==
+                          Number(currentUser?.id) &&
+                          chat.unread > 0 && (
+                            <span className="text-xs text-gray-500 flex items-center gap-1 whitespace-nowrap">
+                              {chat.unread}
+                            </span>
+                          )}
+                      </div>
                     </div>
-                    <p className="text-gray-600 text-sm truncate">{chat.latest_message}</p>
+                    <p className="text-gray-600 text-sm truncate">
+                      {chat.latest_message}
+                    </p>
                   </div>
                 </div>
               </motion.div>
@@ -324,14 +358,19 @@ const Messages = () => {
               <div className="bg-gray-100 p-6 rounded-full mb-4">
                 <MessageSquareOff size={48} className="text-gray-400" />
               </div>
-              <h3 className="text-xl font-medium text-gray-700 mb-2">No Messages Yet</h3>
+              <h3 className="text-xl font-medium text-gray-700 mb-2">
+                No Messages Yet
+              </h3>
               <p className="text-gray-500 max-w-md mx-auto">
                 {searchQuery
                   ? "No messages match your search. Try a different search term."
                   : "You don't have any messages yet. When you start conversations with other users, they'll appear here."}
               </p>
               {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="mt-4 text-[#1c2b3a] font-medium hover:underline">
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="mt-4 text-[#1c2b3a] font-medium hover:underline"
+                >
                   Clear search
                 </button>
               )}
@@ -340,7 +379,7 @@ const Messages = () => {
         )}
       </motion.div>
     </div>
-  )
-}
+  );
+};
 
-export default Messages
+export default Messages;

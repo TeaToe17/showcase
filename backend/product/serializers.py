@@ -11,12 +11,12 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ["id", "name", "price", "image", "imagefile", "owner", "stock", "categories", "created", "sold", "negotiable", "request", "used", "extra_field"]
+        fields = ["id", "name", "price", "image", "imagefile", "owner", "stock", "categories", "created", "sold", "negotiable", "request", "used", "extra_field", "is_sticky"]
         extra_kwargs = {"created":{"read_only":True}, "sold":{"read_only":True}, "owner":{"read_only":True}}
 
     def create(self, validated_data):
         image_file = validated_data.get('imagefile')  # still upload image
-        result = upload(image_file)
+        result = upload(image_file, quality="85")
         validated_data['image'] = result.get('secure_url')
 
         categories = validated_data.pop('categories', [])  # extract M2M field
@@ -24,7 +24,6 @@ class ProductSerializer(serializers.ModelSerializer):
 
         product.categories.set(categories)  # set M2M after save
         return product
-
 
 class CategorySerialzer(serializers.ModelSerializer):
     class Meta:

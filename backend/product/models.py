@@ -18,7 +18,6 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.IntegerField(default=1)
     categories = models.ManyToManyField("product.Category", related_name="category_products")
-    description = models.TextField(null=True, blank=True)
     imagefile = models.ImageField(upload_to="products_images/", blank=True, null=True)  # Write images in form of file to this field
     image = models.URLField(blank=True, null=True)  # Read images in form of cloudinary URLS from this field
     used = models.BooleanField(default=False)
@@ -29,6 +28,8 @@ class Product(models.Model):
     sold = models.BooleanField(default=False)
     negotiable = models.BooleanField(default=False)
     datesold = models.DateTimeField(blank=True, null=True)
+    is_sticky = models.BooleanField(default=False)
+    sticky_timestamp = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
 
@@ -39,18 +40,23 @@ class Product(models.Model):
         rounded_price = math.ceil(increased_price / 100) * 100
         self.standard_price = Decimal(rounded_price)
 
+    # Handle email sending
         if self.request:
-            subject = f"New Product Created for a Request {self.name}"
-            message = f"""Name: {self.name},
-                        Owner's name: {self.owner.username},
-                        Owner's WhatsApp: {self.owner.whatsapp},
-                        Owner's call line: {self.owner.call},
-                        Price: {self.price},
-                        Buyer's Name: {self.request.buyer_name},
-                        Buyer's Whatsapp line: {self.request.buyer_whatsapp_contact},
-                        Buyer's Call line: {self.request.buyer_call_contact} 
-                        """
-            send_email.delay("titobiloluwaa84@gmail.com", subject, message)
+            try:
+                subject = f"New Product Created for a Request {self.name}"
+                message = f"""Name: {self.name},
+                            Owner's name: {self.owner.username},
+                            Owner's WhatsApp: {self.owner.whatsapp},
+                            Owner's call line: {self.owner.call},
+                            Price: {self.price},
+                            Buyer's Name: {self.request.owner.username},
+                            Buyer's Whatsapp line: {self.request.owner.whatsapp},
+                            Buyer's Call line: {self.request.owner.call} 
+                            """
+                send_email("titobiloluwaa84@gmail.com", subject, message)
+            except Exception as e:
+                print(f"Email send failed for product {self.name}: {str(e)}")
+
             
         if self.sold and self.datesold is None:
             self.datesold = now()

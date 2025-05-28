@@ -14,10 +14,6 @@ class Order(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args,**kwargs)
 
-        # if self.completed:
-        #     self.product.sold = True
-        #     self.product.save()
-
         product = self.product
         if self.completed:
             if product.stock > 1:

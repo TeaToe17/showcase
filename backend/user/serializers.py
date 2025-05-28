@@ -7,25 +7,36 @@ from django.utils.encoding import force_bytes
 from django.core.mail import send_mail
 from django.conf import settings
 
-from .models import CustomUser, UserFCMToken, Message, ChatRoom, ChatPreview
+from .models import CustomUser, UserFCMToken, Message, ChatPreview
 from product.models import Category
 
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(allow_blank=True, required=False)
-    password = serializers.CharField(allow_blank=True, required=False)
+    password = serializers.CharField(allow_blank=True, required=False, write_only=True)
+    referral_points = serializers.IntegerField(default = 0, required=False)
     categories = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(), many=True, required=False
     )
 
     class Meta:
         model = CustomUser
-        fields = ["id", "username", "password", "email", "whatsapp", "call", "categories"]
+        fields = ["id", "username", "password", "email", "whatsapp", "call", "categories", "referral_points"]
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
+        request = self.context.get("request")
+        ref = request.query_params.get("ref")
         categories = validated_data.pop("categories", [])
         user = CustomUser.objects.create_user(**validated_data)
         user.categories.set(categories)
+        if ref:
+            try:
+                referrer = CustomUser.objects.get(username = str(ref))
+                if referrer:
+                    referrer.referral_points += 1
+                    referrer.save()
+            except Exception as e:
+                print("Referral error",e)
         return user
 
     
@@ -42,6 +53,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 'whatsapp': user.whatsapp,
                 'call': user.call,
                 'email': user.email,
+                'referral_points':user.referral_points,
                 'categories': list(user.categories.values_list('name', flat=True)),          
                 }
         return token
@@ -57,20 +69,19 @@ class MessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = ["sender", "receiver", "content", "timestamp"]
 
-class ChatRoomSerializer(serializers.ModelSerializer):
+class MessageBooleanSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ChatRoom
-        fields = ["name", "initiator", "initiated"]
+        model = Message
+        fields = ["read"]
 
 class ChatPreviewSerializer(serializers.ModelSerializer):
     time = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatPreview
-        fields = ["latest_message", "sender", "receiver", "time"]
+        fields = ["latest_message", "sender", "receiver", "time", "unread", "actual_sender", "actual_receiver"]
 
     def get_time(self, obj):
-        print(obj)
         if hasattr(obj, 'time') and obj.time:
             return localtime(obj.time).strftime('%H:%M')  # 24-hour format
         return None
@@ -91,7 +102,7 @@ class PasswordResetSerializer(serializers.Serializer):
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
         # reset_url = f"https://localhost:3000/resetpassword?uid={uid}&token={token}"
-        reset_url = f"https://jalev1.vercel.app/resetpassword?uid={uid}&token={token}"
+        reset_url = f"https://jale.vercel.app/resetpassword?uid={uid}&token={token}"
         send_mail(
             subject="Password Reset",
             message=f"Click here to reset your password: {reset_url}",

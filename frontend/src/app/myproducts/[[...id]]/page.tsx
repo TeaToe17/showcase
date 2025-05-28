@@ -4,6 +4,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Image from "next/image"
+import { toast } from "react-toastify"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Plus,
@@ -18,30 +19,51 @@ import {
   Tag,
   Package,
   DollarSign,
+  Gift,
 } from "lucide-react"
 
 import api from "@/lib/api"
 import ProductComponent from "@/components/Product"
-import { fetchProducts, fetchCategories, fetchUser } from "@/lib/utils"
+import { fetchProducts, fetchCategories, getUser } from "@/lib/utils"
 
 interface Product {
   id: number
   name: string
-  price: number
-  imagefile: File
+  price: string
   image: string
+  imagefile: string
+  owner: number
   stock: number
-  description: string
-  used: boolean
+  categories: number[]
+  created: string
   sold: boolean
   negotiable: boolean
+  request: number | null
+  used: boolean
   extra_field: { [key: string]: string }
-  categories: { id: number; name: string }[]
+  is_sticky: boolean
+}
+
+interface Category {
+  id: number
+  name: string
+  icon?: string
+}
+
+type CustomUser = {
+  id: number
+  username: string
+  whatsapp: string
+  call: string
+  image: string
+  email: string
+  referral_points: number
+  categories: number[]
 }
 
 const MyProducts = () => {
   const router = useRouter()
-  const [ownerId, setOwnerId] = useState<number | string>("")
+  const [user, setUser] = useState<CustomUser | null>()
   const [products, setProducts] = useState<Product[]>([])
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null)
   const [error, setError] = useState<string>("")
@@ -61,14 +83,13 @@ const MyProducts = () => {
   const [name, setName] = useState<string>("")
   const [price, setPrice] = useState<number | string>("")
   const [stock, setStock] = useState<number | string>("")
-  const [description, setDescription] = useState<string>("")
   const [image, setImage] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [fairlyUsed, setFairlyUsed] = useState<boolean>(false)
   const [negotiable, setNegotiable] = useState<boolean>(false)
   const [extraField, setExtraField] = useState<{ [key: string]: string }>({})
 
-  const [categories, setCategories] = useState<{ id: number; name: string }[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [selectedCategories, setSelectedCategories] = useState<number[]>([])
 
   // Handle category checkbox change
@@ -81,7 +102,7 @@ const MyProducts = () => {
   const loadProducts = async () => {
     setIsLoading(true)
     try {
-      const owner_id = ownerId
+      const owner_id = user?.id
       if (owner_id) {
         const ProductsData = await fetchProducts(owner_id)
         setProducts(ProductsData)
@@ -106,8 +127,9 @@ const MyProducts = () => {
 
   const loadUser = async () => {
     try {
-      const data = await fetchUser()
-      setOwnerId(data.id)
+      const data = await getUser()
+      if (!data) return
+      setUser(data)
       setError("")
     } catch (err: any) {
       setError(err.message || "Failed to load user data")
@@ -116,7 +138,7 @@ const MyProducts = () => {
 
   useEffect(() => {
     loadProducts()
-  }, [ownerId])
+  }, [user])
 
   useEffect(() => {
     loadUser()
@@ -133,11 +155,16 @@ const MyProducts = () => {
     setIsSubmitting(true)
     setError("")
 
+    if (selectedCategories.length === 0) {
+      setError("Please select at least one category")
+      setIsSubmitting(false)
+      return
+    }
+
     const formData = new FormData()
     formData.append("name", name)
     formData.append("price", price.toString())
     formData.append("stock", stock.toString())
-    formData.append("description", description)
     formData.append("used", fairlyUsed.toString())
     formData.append("negotiable", negotiable.toString())
     formData.append("extra_field", JSON.stringify(extraField))
@@ -154,6 +181,9 @@ const MyProducts = () => {
       showSuccess("Product added successfully!")
       loadProducts()
       resetForm()
+      if (requestId) {
+        router.push("/myproducts")
+      }
     } catch (error: any) {
       console.error("Error creating product:", error)
       setError(error.response?.data?.message || "Failed to add product")
@@ -169,7 +199,6 @@ const MyProducts = () => {
     setImage(null)
     setPreviewUrl(null)
     setStock("")
-    setDescription("")
     setFairlyUsed(false)
     setNegotiable(false)
     setExtraField({})
@@ -186,19 +215,18 @@ const MyProducts = () => {
   const startEditProduct = (product: Product) => {
     window.scrollTo({ top: 0, behavior: "smooth" })
     setCurrentProduct(product)
+    console.log("Product categories structure:", product.categories)
     setName(product.name)
     setPrice(product.price)
     setImage(null)
     setPreviewUrl(product.image)
     setStock(product.stock)
-    setDescription(product.description)
     setFairlyUsed(product.used)
     setNegotiable(product.negotiable)
     setExtraField(product.extra_field || {})
 
-    // Set selected categories
-    const productCategoryIds = product.categories.map((cat) => cat.id)
-    setSelectedCategories(productCategoryIds)
+    // Set selected categories - now we know categories is always an array of numbers
+    setSelectedCategories(product.categories || [])
 
     setEditMode(true)
   }
@@ -209,6 +237,12 @@ const MyProducts = () => {
     setIsSubmitting(true)
     setError("")
 
+    if (selectedCategories.length === 0) {
+      setError("Please select at least one category")
+      setIsSubmitting(false)
+      return
+    }
+
     if (!currentProduct) return
 
     const formData = new FormData()
@@ -218,7 +252,6 @@ const MyProducts = () => {
     formData.append("stock", stock.toString())
     formData.append("used", fairlyUsed.toString())
     formData.append("negotiable", negotiable.toString())
-    formData.append("description", description)
     formData.append("extra_field", JSON.stringify(extraField))
 
     selectedCategories.forEach((category) => {
@@ -241,20 +274,57 @@ const MyProducts = () => {
   }
 
   // Delete product
-  const deleteProduct = async (product: Product) => {
-    if (!confirm("Are you sure you want to delete this product?")) return
+  const confirmDelete = (onConfirm: () => void) => {
+    const toastId = toast(
+      ({ closeToast }) => (
+        <div className="text-sm">
+          <p>Are you sure you want to delete this product?</p>
+          <button
+            onClick={() => {
+              toast.dismiss(toastId)
+              onConfirm()
+            }}
+            style={{
+              marginRight: "8px",
+              color: "white",
+              background: "red",
+              border: "none",
+              padding: "5px 10px",
+              borderRadius: "5px",
+            }}
+          >
+            Yes
+          </button>
+          <button onClick={() => toast.dismiss(toastId)} style={{ padding: "5px 10px" }}>
+            No
+          </button>
+        </div>
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        position: "top-center",
+        toastId: "delete-confirm",
+        closeButton: false,
+      },
+    )
+  }
 
-    setIsLoading(true)
-    try {
-      await api.delete(`product/delete/${product.id}/`)
-      showSuccess("Product deleted successfully!")
-      loadProducts()
-    } catch (error: any) {
-      console.error("Error deleting product:", error)
-      setError(error.response?.data?.message || "Failed to delete product")
-    } finally {
-      setIsLoading(false)
-    }
+  const deleteProduct = (product: Product) => {
+    confirmDelete(async () => {
+      setIsLoading(true)
+      try {
+        await api.delete(`product/delete/${product.id}/`)
+        toast.success("Product deleted successfully!")
+        loadProducts()
+      } catch (error: any) {
+        console.error("Error deleting product:", error)
+        toast.error(error.response?.data?.message || "Failed to delete product")
+      } finally {
+        setIsLoading(false)
+      }
+    })
   }
 
   // Handle image change
@@ -340,6 +410,12 @@ const MyProducts = () => {
       >
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <h1 className="text-3xl font-bold text-[#1c2b3a]">{editMode ? "Edit Product" : "Add a Product"}</h1>
+          <p className="text-lg font-semibold text-center text-gray-800 animate-bounce mt-4">
+            <span className="bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 bg-clip-text text-transparent">
+              Refer friends. Earn points.
+            </span>{" "}
+            <span className="animate-pulse text-indigo-600 font-bold">Edit your product & pin it up for 2 hrs 🔝</span>
+          </p>
           {editMode && (
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -418,10 +494,10 @@ const MyProducts = () => {
                     </div>
                     <input
                       id="price"
-                      type="text"
+                      type="number"
                       placeholder="0.00"
                       value={price}
-                      onChange={(e) => setPrice(Number(e.target.value))}
+                      onChange={(e) => setPrice(e.target.value)}
                       required
                       min="0"
                       step="0.01"
@@ -440,10 +516,10 @@ const MyProducts = () => {
                     </div>
                     <input
                       id="stock"
-                      type="text"
+                      type="number"
                       placeholder="Quantity"
                       value={stock}
-                      onChange={(e) => setStock(Number(e.target.value))}
+                      onChange={(e) => setStock(e.target.value)}
                       required
                       min="0"
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1c2b3a] focus:border-transparent transition-colors"
@@ -451,6 +527,84 @@ const MyProducts = () => {
                   </div>
                 </div>
               </div>
+
+              {editMode && Number(user?.referral_points) > 0 && (
+                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="bg-gradient-to-r from-yellow-400 to-orange-400 p-2 rounded-lg">
+                      <Gift size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-900">Use Referral Points</h3>
+                      <p className="text-xs text-gray-600">Make your product featured for better visibility</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-sm">
+                      <span className="text-gray-600">Available Points: </span>
+                      <span className="font-semibold text-green-600">{user?.referral_points}</span>
+                    </div>
+                    <div className="text-sm">
+                      <span className="text-gray-600">Cost: </span>
+                      <span className="font-semibold text-orange-600">1 point</span>
+                    </div>
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={async () => {
+                      if (Number(user?.referral_points) < 1) {
+                        setError("Insufficient referral points. You need at least 1 point.")
+                        return
+                      }
+
+                      setIsSubmitting(true)
+                      try {
+                        await api.post(`product/make_sticky/${currentProduct?.id}/`)
+                        showSuccess("Product made featured successfully! 1 referral point deducted.")
+                        // Update user points locally
+                        if (user) {
+                          setUser({
+                            ...user,
+                            referral_points: user.referral_points - 1,
+                          })
+                        }
+                        router.push("/myproducts")
+                        // Refresh products to show updated status
+                      } catch (error: any) {
+                        console.error("Error making product sticky:", error)
+                        setError(error.response?.data?.message || "Failed to make product featured")
+                      } finally {
+                        setIsSubmitting(false)
+                      }
+                    }}
+                    disabled={isSubmitting || Number(user?.referral_points) < 1}
+                    className={`w-full py-2 px-4 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-all ${
+                      Number(user?.referral_points) < 1 || isSubmitting
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-white shadow-sm"
+                    }`}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>Processing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Gift size={16} />
+                        <span>Make Featured (1 Point)</span>
+                      </>
+                    )}
+                  </motion.button>
+
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Featured products get better visibility and appear at the top of search results
+                  </p>
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-4">
                 <label className="flex items-center space-x-2 bg-gray-50 px-4 py-2 rounded-md cursor-pointer hover:bg-gray-100 transition-colors">
@@ -475,23 +629,9 @@ const MyProducts = () => {
               </div>
 
               <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  placeholder="Describe your product in detail"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1c2b3a] focus:border-transparent transition-colors"
-                />
-              </div>
-
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Categories</label>
                 <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-md p-2">
-                  {categories.length > 0 ? (
+                  {categories?.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {categories.map((category) => (
                         <label
@@ -740,7 +880,10 @@ const MyProducts = () => {
                 <motion.div
                   key={product.id}
                   variants={itemVariants}
-                  whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                  whileHover={{
+                    y: -5,
+                    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
+                  }}
                   className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 transition-all"
                 >
                   <div className="p-4">

@@ -8,15 +8,16 @@ import { getMessaging, getToken } from "firebase/messaging";
 import { useEffect, useRef } from "react";
 import { useParams, useRouter, usePathname } from "next/navigation";
 
-interface CustomUser {
+type CustomUser = {
   id: number;
-  name: string;
+  username: string;
   whatsapp: string;
   call: string;
   image: string;
   email: string;
+  referral_points: number;
   categories: number[];
-}
+};
 
 interface Product {
   id: number;
@@ -24,7 +25,6 @@ interface Product {
   price: number;
   image: File;
   stock: number;
-  description: string;
   new: boolean;
   sold: boolean;
   negotiable: boolean;
@@ -47,16 +47,38 @@ type Decoded = {
   user_id: number;
 };
 
-export const fetchUser = async (): Promise<CustomUser> => {
+export const fetchUser = async (): Promise<CustomUser | null> => {
   const token = localStorage.getItem(ACCESS_TOKEN);
   if (token) {
     const decoded: DecodedToken = jwtDecode(token);
     const { CustomUser } = decoded;
     return CustomUser;
   } else {
-    throw new Error("Please Login");
+    return null;
   }
 };
+
+
+export const getUser = async (): Promise<CustomUser | null> => {
+  const token = localStorage.getItem(ACCESS_TOKEN);
+
+  if (!token) return null;
+
+  try {
+    const decoded: DecodedToken = jwtDecode(token);
+    const userId = decoded?.CustomUser?.id;
+
+    if (!userId) return null;
+
+    const response = await api.get<CustomUser>(`user/get_user/${userId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    return null;
+  }
+};
+
+
 
 export const fetchBooks = async () => {
   try {
@@ -76,7 +98,7 @@ export const fetchProducts = async (id: string | number | null = null) => {
       : await api.get("product/list/");
     return res.data || [];
   } catch (error: any) {
-    if (error.response.status == 401) {
+    if (error?.response?.status == 401) {
       throw new Error("Please Login again.");
     } else {
       console.log(error);
@@ -114,9 +136,7 @@ if (typeof window !== "undefined") {
 
   getToken(messaging, {
     vapidKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  })
-    // .then((token) => console.log("FCM Token:", token))
-    .catch((err) => console.error("Error getting FCM token:", err));
+  }).catch((err) => console.error("Error getting FCM token:", err));
 }
 export { analytics, messaging };
 
@@ -199,7 +219,6 @@ export function connectToChat(
     return null;
   }
 
-  console.log(productId, ownerId);
   const ws = new WebSocket(
     // productId
     //   ? `ws://localhost:8000/ws/chat/${receiverId}/?token=${token}&product=${productId}&owner=${ownerId}`

@@ -5,15 +5,18 @@ from rest_framework import generics
 from rest_framework import status 
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.views import APIView
 from django.http import Http404
-from django.db.models import Q
+from django.db.models import Q, F
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework.parsers import MultiPartParser
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
+from django.http import JsonResponse
 
-from .serializers import CustomTokenObtainPairSerializer, PermissionTokenSerializer, MessageSerializer, UserSerializer, ChatRoomSerializer, ChatPreviewSerializer, PasswordResetSerializer
-from .models import UserFCMToken, Message, CustomUser, ChatRoom, ChatPreview
+
+from .serializers import CustomTokenObtainPairSerializer, PermissionTokenSerializer, MessageSerializer, UserSerializer, ChatPreviewSerializer, PasswordResetSerializer, MessageBooleanSerializer
+from .models import UserFCMToken, Message, CustomUser, ChatPreview
 from product.tasks import browser_notify
 
 class CreateUserView(generics.CreateAPIView):
@@ -28,8 +31,12 @@ class UserProfileView(generics.UpdateAPIView):
 
     def get_queryset(self):
         return CustomUser.objects.filter(id=self.request.user.id)
-
-
+    
+class ListUserView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+    queryset = CustomUser.objects.all()
+    lookup_field = "id"
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -86,27 +93,6 @@ class ListMessagesView(generics.ListAPIView):
         # print("Messages:",messages)
         serializer = MessageSerializer(messages, many=True)
         return Response(serializer.data)
-    
-class CreateChatRoom(generics.CreateAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = ChatRoomSerializer
-
-    def create(self, request, *args, **kwargs):
-        existing_rooms = ChatRoom.objects.all()
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        room_name = serializer.validated_data.get("roomname")
-        if not existing_rooms.filter(roomname=room_name).exists():
-            serializer.save()
-        else:
-            return Response("Room Already created")
-    
-class ListChatRoom(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = ChatRoomSerializer
-
-    def get(self):
-        pass
 
 class ListChatPreview(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
@@ -125,7 +111,7 @@ def send_message_push_notification(request):
         subject = "New Message"
         message = request.data.get("message")
         # url = str(f"https://localhost:3000/chat/{request.data.get('senderId')}")
-        url = str(f"https://jalev1.vercel.app/chat/{request.data.get('senderId')}")
+        url = str(f"https://jale.vercel.app/chat/{request.data.get('senderId')}")
 
 
         # create another signal or task that doesnt send based on category
@@ -136,10 +122,10 @@ def send_message_push_notification(request):
 
 class PasswordResetView(generics.CreateAPIView):
     serializer_class = PasswordResetSerializer
-    permission_classes = [AllowAny]  # 👈 Required for public access
+    permission_classes = [AllowAny]  # Required for public access
 
 class PasswordResetConfirmView(generics.GenericAPIView):
-    permission_classes = [AllowAny]  # 👈 Required for public access
+    permission_classes = [AllowAny]  # Required for public access
     parser_classes = [MultiPartParser]  # Only if using FormData
 
     def post(self, request):
@@ -163,3 +149,29 @@ class PasswordResetConfirmView(generics.GenericAPIView):
             user.save()
             return Response({'message': 'Password has been reset successfully'})
         return Response({'error': 'Invalid or expired token'}, status=400)
+    
+class UpdatedMessagesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, id):
+        user1 = request.user
+        try:
+            user2 = CustomUser.objects.get(id=id)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "User not found."}, status=404)
+
+        messages = Message.objects.filter(
+            Q(sender=user1, receiver=user2) | Q(sender=user2, receiver=user1),
+            read=False
+        )
+
+        updated_count = 0
+        for message in messages:
+            message.read = True
+            message.save()  # This triggers signals
+            updated_count += 1
+
+        return Response({"updated_count": updated_count}, status=200)
+
+def cron_view(request):
+    return JsonResponse({'status': 'ok'})

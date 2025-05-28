@@ -9,7 +9,6 @@ import { ACCESS_TOKEN, REFRESH_TOKEN } from "../lib/constant"
 import LoadingIndicator from "./LoadingIndicator"
 import { useAppContext } from "@/context"
 import useFcmToken from "./FcmProvider"
-import { useGlobalListener } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { AlertCircle, CheckCircle, Eye, EyeOff, ArrowRight } from "lucide-react"
 
@@ -34,8 +33,6 @@ const Form = ({ route, method }: FormProps) => {
 
   const name = method === "login" ? "Login" : "Register"
   const isRegister = method === "register"
-
-  useGlobalListener()
 
   // Form validation
   const [formErrors, setFormErrors] = useState({

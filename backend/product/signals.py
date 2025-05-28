@@ -3,11 +3,11 @@ from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
-# from webpush import send_group_notification
 
 from .tasks import send_email, browser_notify
 from .models import Product
 from user.models import CustomUser
+from request.models import Request
 
 # @receiver(post_save, sender=Product)
 # def schedule_product_deletion(sender, instance, **kwargs):
@@ -23,7 +23,6 @@ from user.models import CustomUser
 #         })
 
 # processed_products = set()
-
 
 @receiver(m2m_changed, sender=Product.categories.through)
 def notify_users_on_new_product(sender, instance, action, **kwargs):
@@ -45,9 +44,22 @@ def notify_users_on_new_product(sender, instance, action, **kwargs):
             user_Id = user.id
             print(message)
             # url = f"https://localhost:3000/product/{instance.id}"
-            url = f"https://jalev1.vercel.app/product/{instance.id}"
+            url = f"https://jale.vercel.app/product/{instance.id}"
             
             browser_notify(user_Id, subject2, message, str(url))
             send_email(user.email, subject, message)
 
-        
+        if instance.request:
+            request = Request.objects.get(id=instance.request.id)
+            request_placer_email = request.owner.email
+
+            try:
+                send_email(request_placer_email, "Requested Product Uploaded", f"{instance.name} was just uploaded" )
+
+            except Exception as e:
+                print(f"Email notification failed: {e}")
+            try:
+                browser_notify(request.owner.id, "Requested Product Uploaded", instance.name, f"https://jale.vercel.app/product/{instance.id}")
+
+            except Exception as e:
+                print(f"Browser notification failed: {e}")

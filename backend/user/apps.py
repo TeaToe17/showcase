@@ -42,3 +42,5 @@ class UserConfig(AppConfig):
             except Exception as e:
                 logger.error(f"Failed to initialize Firebase Admin: {e}")
 
+
+        import user.signals

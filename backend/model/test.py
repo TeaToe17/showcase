@@ -48,11 +48,11 @@ label2id = {
 id2label = {v: k for k, v in label2id.items()}
 
 # 3. Inference function
-def predict(text):
+def approve(text):
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
     with torch.no_grad():
         outputs = model(**inputs)
     logits = outputs.logits
     predicted_class_id = torch.argmax(logits, dim=1).item()
-    return id2label[predicted_class_id]
+    return id2label[predicted_class_id] in {"negotiation", "general chat"}
 

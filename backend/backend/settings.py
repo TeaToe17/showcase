@@ -262,7 +262,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWS_CREDENTIAL = True
 
 CORS_ALLOWED_ORIGINS = [
-    "https://jalev1.vercel.app",
+    "https://jale.vercel.app",
 ]
 
 # Static files (CSS, JavaScript, Images)

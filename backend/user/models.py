@@ -2,14 +2,15 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 class CustomUser(AbstractUser):
-    email = models.EmailField(blank=True, null=True)
+    email = models.EmailField(unique=True)
     whatsapp = models.CharField(max_length=20, blank=True, null=True)
     call = models.CharField(max_length=20, null=True, blank=True)
-    categories = models.ManyToManyField("product.Category", related_name="users", null=True, blank=True) 
+    categories = models.ManyToManyField("product.Category", related_name="users", blank=True) 
     contact_violation_count = models.PositiveIntegerField(default=0)
     suspension_until = models.DateTimeField(null=True, blank=True)
     is_blacklisted = models.BooleanField(default=False)
     is_suspended = models.BooleanField(default=False)    
+    referral_points = models.IntegerField(default=0, blank=True)
     
 
     def __str__(self):
@@ -25,15 +26,17 @@ class Message(models.Model):
     receiver = models.ForeignKey("user.CustomUser", on_delete=models.CASCADE, related_name='received_messages', null=True)
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
-
-class ChatRoom(models.Model):
-    roomname = models.CharField(max_length=30)
-    initiator = models.ForeignKey("user.CustomUser", on_delete=models.CASCADE, related_name="initiator_chatrooms", null=True)
-    initiated = models.ForeignKey("user.CustomUser", on_delete=models.CASCADE, related_name="initiated_chatrooms", null=True)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False, blank=True)
 
 class ChatPreview(models.Model):
     sender = models.ForeignKey("user.CustomUser", on_delete=models.CASCADE, related_name="sender_previews")
     receiver = models.ForeignKey("user.CustomUser", on_delete=models.CASCADE, related_name="receiver_previews")
     latest_message = models.CharField(max_length=100)
     time = models.DateTimeField()
+    unread = models.IntegerField(default=0, blank=True) 
+    actual_sender = models.ForeignKey("user.CustomUser", on_delete=models.CASCADE, related_name="actual_sender_previews", null=True)
+    actual_receiver = models.ForeignKey("user.CustomUser", on_delete=models.CASCADE, related_name="actual_receiver_previews", null=True)
+    
+
+    class Meta:
+        ordering = ["-time"]

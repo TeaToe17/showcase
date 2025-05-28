@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, UserFCMToken, Message, ChatRoom, ChatPreview
+from .models import CustomUser, UserFCMToken, Message, ChatPreview
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
@@ -15,10 +15,6 @@ class UserFCMTokenAdmin(admin.ModelAdmin):
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
     model = Message
-
-@admin.register(ChatRoom)
-class ChatRoomAdmin(admin.ModelAdmin):
-    model = ChatRoom
 
 @admin.register(ChatPreview)
 class ChatPreviewAdmin(admin.ModelAdmin):

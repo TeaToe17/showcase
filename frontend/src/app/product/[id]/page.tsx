@@ -49,7 +49,6 @@ interface Product {
   imagefile: File | string;
   image: string;
   stock: number;
-  description: string;
   used: boolean;
   sold: boolean;
   negotiable: boolean;
@@ -111,7 +110,7 @@ const ProductDetails = () => {
 
   const HandleOrder = async () => {
     try {
-      const user: CustomUser = await fetchUser();
+      const user: CustomUser | null = await fetchUser();
       console.log("Fetched user:", user);
       if (!user || !user.id) {
         setMessage({
@@ -347,13 +346,6 @@ const ProductDetails = () => {
               <p className="text-[#EF4444] text-2xl font-semibold">
                 ₦{product.price.toLocaleString()}
               </p>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-medium text-gray-700 mb-2">Description</h3>
-                <p className="text-gray-600">
-                  {product.description || "No description available."}
-                </p>
-              </div>
 
               <div>
                 <h3 className="font-medium text-gray-700 mb-2">Categories</h3>
