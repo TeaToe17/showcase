@@ -39,7 +39,7 @@ type Message = {
 
 type CustomUser = {
   id: number
-  name: string
+  username: string
   whatsapp: string
   call: string
   image: string
