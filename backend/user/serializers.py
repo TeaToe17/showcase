@@ -49,7 +49,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         if isinstance(user, CustomUser):
             token['CustomUser'] = {
                 'id':user.id,
-                'name': user.username,
+                'username': user.username,
                 'whatsapp': user.whatsapp,
                 'call': user.call,
                 'email': user.email,

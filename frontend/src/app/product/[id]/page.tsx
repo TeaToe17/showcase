@@ -26,10 +26,12 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface CustomUser {
   id: number;
-  name: string;
+  username: string;
   whatsapp: string;
   call: string;
   image: string;
+  email: string;
+  referral_points: number;
   categories: number[];
 }
 
@@ -124,7 +126,7 @@ const ProductDetails = () => {
 
       const formData = new FormData();
       formData.append("product", product?.id?.toString() ?? "Missing Book ID");
-      formData.append("buyer_name", user.name ?? "Missing Name");
+      formData.append("buyer_name", user.username ?? "Missing Name");
       formData.append(
         "buyer_whatsapp_contact",
         user.whatsapp ?? "Missing WhatsApp"
@@ -140,7 +142,7 @@ const ProductDetails = () => {
         });
         router.push(
           `https://wa.me/2347046938727?text=Hello%20I%20am%20${encodeURIComponent(
-            user.name
+            user.username
           )},%0AI%20just%20placed%20an%20order%20for%20${encodeURIComponent(
             product?.name ?? ""
           )}%20(${product?.id})`

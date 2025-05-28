@@ -274,7 +274,7 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
         currentProduct?.id.toString() ?? "Missing Book ID"
       );
       formData.append("agreed_price", price.toString());
-      formData.append("buyer_name", user.name ?? "Missing Name");
+      formData.append("buyer_name", user.username ?? "Missing Name");
       formData.append(
         "buyer_whatsapp_contact",
         user.whatsapp ?? "Missing WhatsApp"
@@ -296,7 +296,7 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
       // Redirect to WhatsApp
       router.push(
         `https://wa.me/2347046938727?text=Hello%20I%20am%20${encodeURIComponent(
-          user.name
+          user.username
         )},%0AI%20just%20concluded%20an%20order%20for%20${encodeURIComponent(
           currentProduct?.name ?? ""
         )}%20(${currentProduct?.id})`
