@@ -1,23 +1,14 @@
-"use client";
+'use client'
 
-import React, { Suspense } from "react";
-import Form from "../../components/Form";
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
 import ReferralLanding from "@/components/referral-landing";
-import { useSearchParams } from "next/navigation";
 
-const FormWrapper = () => {
-  const searchParams = useSearchParams();
-  const ref = searchParams.get("ref");
+const FormWrapper = dynamic(() => import("@/components/Formwrapper"), {
+  ssr: false,
+});
 
-  return (
-    <Form
-      route={ref ? `/user/create_user/?ref=${ref}` : "/user/create_user/"}
-      method="register"
-    />
-  );
-};
-
-const Register: React.FC = () => {
+const Register = () => {
   return (
     <>
       <ReferralLanding />
