@@ -1,3 +1,5 @@
+"use client"
+
 import axios from "axios";
 import { jwtDecode } from "jwt-decode"; // Default import for jwt-decode
 import { ACCESS_TOKEN, REFRESH_TOKEN } from "./constant";
@@ -17,7 +19,7 @@ let refreshSubscribers: ((token: string) => void)[] = [];
 
 type User = {
   id: number;
-}
+};
 
 const isTokenExpired = (token: any): boolean => {
   try {
@@ -49,36 +51,16 @@ export const logout = () => {
     const token = localStorage.getItem(ACCESS_TOKEN);
     if (!token) {
       console.log("No token found in localStorage.");
-      alert("You are Already logged Out")
+      alert("You are Already logged Out");
       return;
     }
-
-    // const decoded: { CustomUser: User } = jwtDecode(token);
-    // console.log("📌 Decoded User ID:", decoded?.CustomUser?.id);
-
-    // if (decoded?.CustomUser) {
-    //   api.delete("user/delete_permission_token/")
-    //     .then((response) => {
-    //       console.log("✅ Token deleted successfully:", response.data);
-    //       // Perform logout cleanup
-    //     })
-    //     .catch((error) => {
-    //       console.error("❌ Error deleting token:", error.response || error);
-    //       localStorage.removeItem(ACCESS_TOKEN);
-    //       localStorage.removeItem(REFRESH_TOKEN);
-    //       window.location.href = "/logout";  
-    //     });
-    //   }
-      localStorage.removeItem(ACCESS_TOKEN);
-      localStorage.removeItem(REFRESH_TOKEN);
-      window.location.href = "/logout";  
+    localStorage.removeItem(ACCESS_TOKEN);
+    localStorage.removeItem(REFRESH_TOKEN);
+    window.location.href = "/logout";
   } catch (error) {
     console.error("❌ Error decoding token or making API call:", error);
   }
-
-
 };
-
 
 api.interceptors.request.use(
   async (config) => {
