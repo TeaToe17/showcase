@@ -93,7 +93,7 @@ const ReferralLanding = () => {
                       Jále — Buy. Sell. Negotiate.
                     </span>
                     <span className="bg-gradient-to-r from-[#fcecd8] to-[#1c2b3a] bg-clip-text text-transparent block">
-                        The Real Plug 💫
+                      The Real Plug 💫
                     </span>
                   </h1>
                   <br />
@@ -230,17 +230,6 @@ const ReferralLanding = () => {
               <p className="text-gray-500 mb-6">
                 Trusted by thousands of users worldwide
               </p>
-              <div className="flex justify-center items-center gap-8 opacity-60">
-                {/* Placeholder for company logos */}
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="w-24 h-12 bg-gray-200 rounded-lg flex items-center justify-center"
-                  >
-                    <span className="text-gray-400 text-xs">Logo {i}</span>
-                  </div>
-                ))}
-              </div>
             </motion.div>
           </div>
         </div>
