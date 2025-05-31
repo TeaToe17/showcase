@@ -1,12 +1,16 @@
-'use client'
+"use client"
 
-import dynamic from "next/dynamic";
-import { Suspense } from "react";
-import ReferralLanding from "@/components/referral-landing";
+import dynamic from "next/dynamic"
+import { Suspense } from "react"
+import ReferralLanding from "@/components/referral-landing"
 
 const FormWrapper = dynamic(() => import("@/components/Formwrapper"), {
   ssr: false,
-});
+})
+
+function SearchBarFallback() {
+  return <p>Loading...</p>
+}
 
 const Register = () => {
   return (
@@ -43,13 +47,13 @@ const Register = () => {
           >
             Register
           </h1>
-          <Suspense fallback={<p>Loading form...</p>}>
+          <Suspense fallback={<SearchBarFallback />}>
             <FormWrapper />
           </Suspense>
         </div>
       </div>
     </>
-  );
-};
+  )
+}
 
-export default Register;
+export default Register
