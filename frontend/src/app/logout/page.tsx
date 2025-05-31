@@ -11,7 +11,7 @@ import { ACCESS_TOKEN } from "@/lib/constant";
 const Logout = () => {
   const { setIsLoggedIn, isLoggedIn } = useAppContext();
   const router = useRouter();
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(3);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Clear localStorage and update app context
