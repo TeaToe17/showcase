@@ -122,3 +122,6 @@ yarl==1.18.3
 zope.interface==7.2
 channels_redis
 cloudinary
+pandas 
+scikit-learn 
+datasets

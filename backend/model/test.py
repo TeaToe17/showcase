@@ -16,7 +16,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 # Setup Django
 django.setup()
 
-MODEL_FILE_ID = '1FO5ito6qnDqR1SERudfRueveSvnGHi-x'
+MODEL_FILE_ID = '1syN8D7agjTa6FkRded4RafW1Fs_W0HQg'
 MODEL_ZIP_PATH = "model.zip"
 MODEL_DIR = "model/trained_model_2"
 
