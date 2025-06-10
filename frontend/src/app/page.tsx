@@ -4,7 +4,16 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Search, ShoppingCart, ChevronRight, ChevronLeft, Flame, Zap, Star, Crown } from "lucide-react";
+import {
+  Search,
+  ShoppingCart,
+  ChevronRight,
+  ChevronLeft,
+  Flame,
+  Zap,
+  Star,
+  Crown,
+} from "lucide-react";
 import { fetchProducts, fetchCategories } from "@/lib/utils";
 
 // Define the TypeScript interface for a single product
@@ -22,6 +31,7 @@ interface Product {
   categories: number[];
   owner: number;
   is_sticky: boolean;
+  reserved: boolean;
 }
 
 // Featured banners
@@ -563,7 +573,6 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
           }`}
         />
 
-        
         {/* Enhanced badges for sticky products */}
         {product.negotiable && (
           <div
@@ -586,6 +595,30 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
             }`}
           >
             Used
+          </div>
+        )}
+
+        {product.stock == 1 && (
+          <div
+            className={`absolute left-2 bottom-2 text-white text-xs px-2 py-1 rounded-full ${
+              product.is_sticky
+                ? "bg-red-600 shadow-lg animate-pulse"
+                : "bg-red-600"
+            }`}
+          >
+            1 Left!
+          </div>
+        )}
+
+        {product.reserved && (
+          <div
+            className={`absolute right-2 bottom-2 text-white text-xs px-2 py-1 rounded-full ${
+              product.is_sticky
+                ? "bg-gradient-to-r from-[#fcecd8] to-[#1c2b3a] shadow-lg animate-pulse"
+                : "bg-red-400"
+            }`}
+          >
+            Ordered
           </div>
         )}
 

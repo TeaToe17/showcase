@@ -60,6 +60,7 @@ class ProductUpdateView(generics.UpdateAPIView):
     def get_queryset(self):
         user = self.request.user
         return Product.objects.filter(owner=user)
+
     
 class ProductDeleteView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated]

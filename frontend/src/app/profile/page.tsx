@@ -386,7 +386,8 @@ const Profile = () => {
                       <div className="flex items-center gap-2">
                         <div className="flex-1 bg-gray-50 rounded px-2 py-1 border border-gray-200 font-mono text-xs overflow-hidden">
                           <span className="block truncate">
-                            https://jale.vercel.app/register/?ref={user.username}
+                            https://jale.vercel.app/register/?ref=
+                            {user.username}
                           </span>
                         </div>
                         <motion.button

@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def send_email(to_email, subject, message):
-    from_email = "titobiloluwaa83@gmail.com"
+    from_email = "jale.official.contact@gmail.com"
     password = os.getenv("EMAIL_HOST_PASSWORD")  # Use app-specific password here
     
     # Set up the MIME
@@ -47,8 +47,6 @@ def send_email(to_email, subject, message):
             "subject": subject,
         }  
     
-
-
 logger = logging.getLogger(__name__)
 
 
@@ -72,11 +70,16 @@ def browser_notify(user_Id, subject, message, url):
 
         for userToken in tokens:
             message_obj = messaging.Message(
-                data={
-                    "customtitle": subject,
-                    "custombody": message,
-                    "url": url
-                },
+            notification={
+                "title": subject,
+                "body": message,
+                "click_action": url  # This handles the URL click on auto-notifications
+            },
+            data={
+                "url": url,  # Backup data for service worker access
+                "customtitle": subject,
+                "custombody": message,
+            },
                 token=userToken
             )
             response = messaging.send(message_obj)

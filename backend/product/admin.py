@@ -6,7 +6,9 @@ from .models import Product
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    readonly_fields = ("created",)
-    ordering = ("-created",)
+    readonly_fields = ["created",]
+    ordering = ["-created",]
+    search_fields = ['name']
+
 
 admin.site.register(Category)

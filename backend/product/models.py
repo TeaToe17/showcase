@@ -16,7 +16,7 @@ class Category(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=50, null = True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    stock = models.IntegerField(default=1)
+    stock = models.PositiveIntegerField(default=1)
     categories = models.ManyToManyField("product.Category", related_name="category_products")
     imagefile = models.ImageField(upload_to="products_images/", blank=True, null=True)  # Write images in form of file to this field
     image = models.URLField(blank=True, null=True)  # Read images in form of cloudinary URLS from this field
@@ -30,15 +30,23 @@ class Product(models.Model):
     datesold = models.DateTimeField(blank=True, null=True)
     is_sticky = models.BooleanField(default=False)
     sticky_timestamp = models.DateTimeField(null=True, blank=True)
+    reserved = models.BooleanField(default=False)
+
 
     def save(self, *args, **kwargs):
-
-        # Increase owner_price by 20%
-        increased_price = self.price * Decimal('1.2')
         
-        # Round up to the nearest 500
-        rounded_price = math.ceil(increased_price / 100) * 100
-        self.standard_price = Decimal(rounded_price)
+        # Reverting sold and reserved status when quantity is updated 
+        if self.pk:
+            if self.stock > 0:
+                self.sold = False
+                self.reserved = False
+
+        # # Increase owner_price by 20%
+        # increased_price = self.price * Decimal('1.2')
+        
+        # # Round up to the nearest 500
+        # rounded_price = math.ceil(increased_price / 100) * 100
+        # self.standard_price = Decimal(rounded_price)
 
     # Handle email sending
         if self.request:
@@ -53,7 +61,7 @@ class Product(models.Model):
                             Buyer's Whatsapp line: {self.request.owner.whatsapp},
                             Buyer's Call line: {self.request.owner.call} 
                             """
-                send_email("titobiloluwaa84@gmail.com", subject, message)
+                send_email("titobiloluwaa83@gmail.com", subject, message)
             except Exception as e:
                 print(f"Email send failed for product {self.name}: {str(e)}")
 

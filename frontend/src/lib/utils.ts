@@ -47,6 +47,17 @@ type Decoded = {
   user_id: number;
 };
 
+type CartItem = {
+  id: number;
+  owner: number;
+  product: number;
+  quantity: number;
+  product_image: string;
+  product_stock: number;
+  product_name: string;
+  product_price: number;
+};
+
 export const fetchUser = async (): Promise<CustomUser | null> => {
   const token = localStorage.getItem(ACCESS_TOKEN);
   if (token) {
@@ -57,7 +68,6 @@ export const fetchUser = async (): Promise<CustomUser | null> => {
     return null;
   }
 };
-
 
 export const getUser = async (): Promise<CustomUser | null> => {
   const token = localStorage.getItem(ACCESS_TOKEN);
@@ -77,8 +87,6 @@ export const getUser = async (): Promise<CustomUser | null> => {
     return null;
   }
 };
-
-
 
 export const fetchBooks = async () => {
   try {
@@ -249,3 +257,8 @@ export function LoggedIn(): boolean {
   if (typeof window === "undefined") return false; // during SSR
   return Boolean(localStorage.getItem(ACCESS_TOKEN));
 }
+
+export const fetchCartItems = async () => {
+  const res = await api.get<CartItem[]>("order/list/cartitem/");
+  return res.data;
+};

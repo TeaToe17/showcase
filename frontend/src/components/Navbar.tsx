@@ -1,40 +1,48 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useEffect, useRef, useState } from "react"
-import Link from "next/link"
-import { useRouter, usePathname } from "next/navigation"
-import { useGlobalListener, fetchUser } from "@/lib/utils"
-import { useAppContext } from "@/context"
-import Image from "next/image"
-import api, { logout } from "@/lib/api"
-import { Menu, X, Home, MessageSquareMore , User, HandCoins  } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
-import { ACCESS_TOKEN } from "@/lib/constant"
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+import { useGlobalListener, fetchUser } from "@/lib/utils";
+import { useAppContext } from "@/context";
+import Image from "next/image";
+import api, { logout } from "@/lib/api";
+import {
+  Menu,
+  X,
+  Home,
+  MessageSquareMore,
+  User,
+  HandCoins,
+  ShoppingCart,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ACCESS_TOKEN } from "@/lib/constant";
 
 type Message = {
-  sender_id: number
-  receiver_id: number
-  text: string
-  created_at: string
-}
+  sender_id: number;
+  receiver_id: number;
+  text: string;
+  created_at: string;
+};
 
 type ChatPreview = {
-  sender: number
-  receiver: number
-  latest_message: string
-  time: string
-  unread: number
-  actual_sender: number
-  actual_receiver: number
-}
+  sender: number;
+  receiver: number;
+  latest_message: string;
+  time: string;
+  unread: number;
+  actual_sender: number;
+  actual_receiver: number;
+};
 
 const Navbar = () => {
-  const router = useRouter()
-  const pathname = usePathname()
-  const dropdownRef = useRef<HTMLDivElement | null>(null)
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const router = useRouter();
+  const pathname = usePathname();
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const {
     globalMessages,
     isLoggedIn,
@@ -46,117 +54,145 @@ const Navbar = () => {
     setCurrentUser,
     messageTrigger,
     setMessageTrigger,
-  } = useAppContext()
+    cartCount,
+    setChangedCart,
+  } = useAppContext();
 
-  useGlobalListener()
+  useGlobalListener();
+
+  // Making sure cart load regardless of route
+  useEffect(() => {
+    setChangedCart(true);
+  }, []);
 
   useEffect(() => {
     const loadUser = async () => {
-      const data = await fetchUser()
+      const data = await fetchUser();
       if (data) {
-        setCurrentUser(data)
+        setCurrentUser(data);
       }
-    }
-    loadUser()
-  }, [])
+    };
+    loadUser();
+  }, []);
 
   useEffect(() => {
-    if (pathname === `chat/${globalMessages?.receiver_id}`) return
+    if (pathname === `chat/${globalMessages?.receiver_id}`) return;
     if (globalMessages) {
       const PushMessage = async (msg: Message) => {
-        const formData = new FormData()
-        formData.append("receiverId", msg.receiver_id.toString())
-        formData.append("senderId", msg.sender_id.toString())
-        formData.append("message", msg.text)
+        const formData = new FormData();
+        formData.append("receiverId", msg.receiver_id.toString());
+        formData.append("senderId", msg.sender_id.toString());
+        formData.append("message", msg.text);
         try {
           await api.post("user/push_message/", formData, {
             headers: { "Content-Type": "multipart/form-data" },
-          })
+          });
         } catch (error) {
-          console.log(error)
+          console.log(error);
         }
-      }
+      };
 
-      PushMessage(globalMessages)
+      PushMessage(globalMessages);
     }
-  }, [globalMessages])
+  }, [globalMessages]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false)
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setDropdownOpen(false);
       }
-    }
+    };
 
     if (dropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside)
+      document.addEventListener("mousedown", handleClickOutside);
     } else {
-      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [dropdownOpen])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   // Close mobile menu when route changes
   useEffect(() => {
-    setMobileMenuOpen(false)
-  }, [pathname])
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   // Fetch chat previews when messageTrigger is true
   useEffect(() => {
-    if (!messageTrigger || !isLoggedIn) return
+    if (!messageTrigger || !isLoggedIn) return;
 
-    const token = localStorage.getItem(ACCESS_TOKEN)
+    const token = localStorage.getItem(ACCESS_TOKEN);
     if (token) {
       const fetchPreview = async () => {
         try {
-          console.log("fetched chat previews for navbar")
-          const res = await api.get("user/chatpreview/list/")
-          const data: ChatPreview[] = res.data
+          console.log("fetched chat previews for navbar");
+          const res = await api.get("user/chatpreview/list/");
+          const data: ChatPreview[] = res.data;
 
-          setChats(data)
+          setChats(data);
           // Reset the trigger after successful fetch
-          setMessageTrigger(false)
+          setMessageTrigger(false);
         } catch (error: any) {
-          console.error("Error fetching chat previews:", error)
+          console.error("Error fetching chat previews:", error);
           // Reset trigger even on error to prevent infinite loops
-          setMessageTrigger(false)
+          setMessageTrigger(false);
         }
-      }
-      fetchPreview()
+      };
+      fetchPreview();
     }
-  }, [messageTrigger, isLoggedIn, setChats, setMessageTrigger])
+  }, [messageTrigger, isLoggedIn, setChats, setMessageTrigger]);
 
   // Update message count when chats change
   useEffect(() => {
-    if (chats.length < 1 || !currentUser) return
+    if (chats.length < 1 || !currentUser) return;
 
-    const user_id = Number(currentUser.id)
+    const user_id = Number(currentUser.id);
 
     const count = chats.reduce((acc, chat) => {
-      const sender = Number(chat.actual_sender)
+      const sender = Number(chat.actual_sender);
       if (sender !== user_id && !!chat.unread) {
-        return acc + 1
+        return acc + 1;
       }
-      return acc
-    }, 0)
+      return acc;
+    }, 0);
 
-    setMessageCount(count)
-  }, [chats, currentUser, setMessageCount])
+    setMessageCount(count);
+  }, [chats, currentUser, setMessageCount, globalMessages]);
 
   const navItems = isLoggedIn ? (
     <>
       <NavItem href="/" icon={<Home className="w-5 h-5" />} label="Home" />
-      <NavItem href="/requests" icon={<HandCoins className="w-5 h-5"/>} label="Requests" />
+      <NavItem
+        href="/requests"
+        icon={<HandCoins className="w-5 h-5" />}
+        label="Requests"
+      />
+      <NavItem
+        href="/cart"
+        icon={
+          <div className="relative">
+            <ShoppingCart className="w-5 h-5" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold px-1 rounded-full">
+                {cartCount}
+              </span>
+            )}
+          </div>
+        }
+        label="Cart"
+      />
       <NavItem
         href="/messages"
         label="Messages"
         onClick={() => router.push("/messages")}
         icon={
           <div className="relative">
-            <MessageSquareMore  className="w-5 h-5" />
+            <MessageSquareMore className="w-5 h-5" />
             {messageCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold px-1 rounded-full">
                 {messageCount}
@@ -187,15 +223,15 @@ const Navbar = () => {
               <DropdownItem
                 label="Profile"
                 onClick={() => {
-                  router.push("/profile")
-                  setDropdownOpen(false)
+                  router.push("/profile");
+                  setDropdownOpen(false);
                 }}
               />
               <DropdownItem
                 label="Logout"
                 onClick={() => {
-                  logout()
-                  setDropdownOpen(false)
+                  logout();
+                  setDropdownOpen(false);
                 }}
               />
             </motion.div>
@@ -206,23 +242,42 @@ const Navbar = () => {
   ) : (
     <>
       <NavItem href="/" icon={<Home className="w-5 h-5" />} label="Home" />
-      <NavItem href="/login" label="Login" onClick={() => router.push("/login")} />
-      <NavItem href="/register" label="Register" onClick={() => router.push("/register")} />
+      <NavItem
+        href="/login"
+        label="Login"
+        onClick={() => router.push("/login")}
+      />
+      <NavItem
+        href="/register"
+        label="Register"
+        onClick={() => router.push("/register")}
+      />
     </>
-  )
+  );
 
   return (
     <nav className="w-full bg-gradient-to-r from-[#fcecd8] to-[#1c2b3a] text-white px-4 py-3 shadow-md">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         {/* Logo */}
         <Link href="/" className="z-10 ml-5">
-          <motion.div whileHover={{ scale: 1.1 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
-            <Image src="/jale logo.png" alt="Jàle Logo" width={40} height={40} className="rounded-full" />
+          <motion.div
+            whileHover={{ scale: 1.1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
+            <Image
+              src="/jale logo.png"
+              alt="Jàle Logo"
+              width={40}
+              height={40}
+              className="rounded-full"
+            />
           </motion.div>
         </Link>
 
         {/* Desktop Navigation */}
-        <ul className="hidden md:flex items-center gap-6 text-sm font-medium">{navItems}</ul>
+        <ul className="hidden md:flex items-center gap-6 text-sm font-medium">
+          {navItems}
+        </ul>
 
         {/* Mobile Menu Button */}
         <button
@@ -264,14 +319,16 @@ const Navbar = () => {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="fixed inset-0 z-[25] bg-gradient-to-r from-[#fcecd8] to-[#1c2b3a] pt-20 px-6"
             >
-              <ul className="flex flex-col gap-4 text-base font-medium">{navItems}</ul>
+              <ul className="flex flex-col gap-4 text-base font-medium">
+                {navItems}
+              </ul>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
     </nav>
-  )
-}
+  );
+};
 
 // Helper components for cleaner code
 const NavItem = ({
@@ -280,10 +337,10 @@ const NavItem = ({
   label,
   onClick,
 }: {
-  href: string
-  icon?: React.ReactNode
-  label: string
-  onClick?: () => void
+  href: string;
+  icon?: React.ReactNode;
+  label: string;
+  onClick?: () => void;
 }) => {
   return (
     <li>
@@ -292,21 +349,25 @@ const NavItem = ({
         onClick={onClick}
         className="flex items-center gap-2 p-2 rounded-md transition-all hover:bg-white/10"
       >
-        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} className="flex items-center gap-2">
+        <motion.div
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center gap-2"
+        >
           {icon}
           <span className={icon ? "md:hidden" : ""}>{label}</span>
         </motion.div>
       </Link>
     </li>
-  )
-}
+  );
+};
 
 const DropdownItem = ({
   label,
   onClick,
 }: {
-  label: string
-  onClick: () => void
+  label: string;
+  onClick: () => void;
 }) => {
   return (
     <motion.button
@@ -316,7 +377,7 @@ const DropdownItem = ({
     >
       {label}
     </motion.button>
-  )
-}
+  );
+};
 
-export default Navbar
+export default Navbar;

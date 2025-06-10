@@ -1,65 +1,72 @@
-# signals.py
+# signals.py - CORRECTED VERSION
 from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
-from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
+from django.db import transaction
+import threading
 
 from .tasks import send_email, browser_notify
 from .models import Product
 from user.models import CustomUser
-from request.models import Request
-
-# @receiver(post_save, sender=Product)
-# def schedule_product_deletion(sender, instance, **kwargs):
-
-#     if instance.sold and instance.datesold:
-#         # Schedule the deletion task to run after 7 days (604800 seconds)
-#         product = get_object_or_404(sender, id = instance.id)
-#         task = delete_product_after_7_days.apply_async(args=[instance.id], countdown=604800)
-#         # delete_product_after_7_days.apply_async((instance.id,), countdown=604800)
-#         return JsonResponse({
-#             "task_name": f"Task {task.id} scheduled to delete product '{product.name}'",
-#             "task_id": task.id,
-#         })
-
-# processed_products = set()
 
 @receiver(m2m_changed, sender=Product.categories.through)
 def notify_users_on_new_product(sender, instance, action, **kwargs):
-    # Ensure action is 'post_add' to capture when categories are fully updated
     if action == "post_add":
-        users = set(CustomUser.objects.filter(categories__in=instance.categories.all()).distinct())
+        # Use transaction.on_commit to ensure this runs after the transaction
+        transaction.on_commit(lambda: process_notifications_async(instance))
 
-        print(f"product categories: {instance.categories.all()}")
-        print(f"Category interested users: {users}")
+def process_notifications_async(instance):
+    """Process notifications in a separate thread after transaction commits"""
+    threading.Thread(target=send_product_notifications, args=(instance.id,)).start()
 
-        if not users:
-            print("No users found for these categories:", instance.categories.all())
-
-        for user in users:
-            print("User:",user)
-            subject = "New product Posted"
-            subject2 = "New Product Posted : Browser"
-            message = f"Just in! \n {instance.name}"
-            user_Id = user.id
-            print(message)
-            # url = f"https://localhost:3000/product/{instance.id}"
-            url = f"https://jale.vercel.app/product/{instance.id}"
-            
-            browser_notify(user_Id, subject2, message, str(url))
-            send_email(user.email, subject, message)
-
-        if instance.request:
-            request = Request.objects.get(id=instance.request.id)
-            request_placer_email = request.owner.email
-
+def send_product_notifications(product_id):
+    """Send notifications for a product - runs in background thread"""
+    try:
+        # Get product with related data in one query
+        product = Product.objects.select_related('request__owner').prefetch_related(
+            'categories', 
+            'categories__customuser_set'
+        ).get(id=product_id)
+        
+        # Get all users interested in these categories (optimized query)
+        interested_users = CustomUser.objects.filter(
+            categories__in=product.categories.all()
+        ).distinct().values('id', 'email')
+        
+        print(f"Found {len(interested_users)} interested users")
+        
+        # Prepare notification data
+        subject = "New product Posted"
+        subject2 = "New Product Posted : Browser"
+        message = f"Just in! \n {product.name}"
+        url = f"https://jale.vercel.app/product/{product.id}"
+        
+        # Send notifications to interested users
+        for user_data in interested_users:
             try:
-                send_email(request_placer_email, "Requested Product Uploaded", f"{instance.name} was just uploaded" )
-
+                # Send email notification
+                send_email(user_data['email'], subject, message)
+                # Send browser notification
+                browser_notify(user_data['id'], subject2, message, url)
             except Exception as e:
-                print(f"Email notification failed: {e}")
+                print(f"Failed to notify user {user_data['id']}: {e}")
+        
+        # Handle request owner notification
+        if product.request and product.request.owner:
             try:
-                browser_notify(request.owner.id, "Requested Product Uploaded", instance.name, f"https://jale.vercel.app/product/{instance.id}")
-
+                request_message = f"{product.name} was just uploaded, Here: {url}"
+                send_email(
+                    product.request.owner.email, 
+                    "Requested Product Uploaded", 
+                    request_message
+                )
+                browser_notify(
+                    product.request.owner.id,
+                    "Requested Product Uploaded", 
+                    product.name, 
+                    url
+                )
             except Exception as e:
-                print(f"Browser notification failed: {e}")
+                print(f"Failed to notify request owner: {e}")
+                
+    except Exception as e:
+        print(f"Error in send_product_notifications: {e}")

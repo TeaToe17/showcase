@@ -114,7 +114,7 @@ def send_message_push_notification(request):
         url = str(f"https://jale.vercel.app/chat/{request.data.get('senderId')}")
 
 
-        # create another signal or task that doesnt send based on category
+        # This task is loacted in product.task because its also used for Products
         browser_notify(user_Id, subject, message, url)
         return Response({'status': 'Notification task queued'})
     except Exception as e:

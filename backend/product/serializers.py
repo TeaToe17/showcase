@@ -11,7 +11,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ["id", "name", "price", "image", "imagefile", "owner", "stock", "categories", "created", "sold", "negotiable", "request", "used", "extra_field", "is_sticky"]
+        fields = ["id", "name", "price", "image", "imagefile", "owner", "stock", "categories", "created", "sold", "negotiable", "request", "used", "extra_field", "is_sticky", "reserved"]
         extra_kwargs = {"created":{"read_only":True}, "sold":{"read_only":True}, "owner":{"read_only":True}}
 
     def create(self, validated_data):
