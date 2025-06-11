@@ -6,6 +6,7 @@ import { useAppContext } from "@/context";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { Metadata } from "next";
 import {
   fetchCategories,
   fetchProducts,
@@ -256,17 +257,6 @@ const ProductDetails = () => {
 
   return (
     <>
-      <Head>
-        <title>{product.name}</title>
-        <meta property="og:title" content={product.name} />
-        <meta property="og:image" content={product.image} />
-        <meta property="og:type" content="product" />
-        <meta
-          property="og:url"
-          content={`https://jale.vercel.app/product/${product.id}`}
-        />
-        <meta name="twitter:card" content="summary_large_image" />
-      </Head>
       <main className="min-h-screen bg-[#f8f9fa] px-4 sm:px-8 md:px-16 lg:px-32 py-10">
         {/* Navigation Bar */}
         <div className="flex justify-between items-center mb-6">

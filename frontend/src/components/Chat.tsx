@@ -378,13 +378,13 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
     if (!LoggedIn) router.replace("/login");
   }, [LoggedIn, router]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowDiv(false);
-    }, 8000); // Show for 8 seconds
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     setShowDiv(false);
+  //   }, 8000); // Show for 8 seconds
 
-    return () => clearTimeout(timer); // Cleanup on unmount
-  }, []);
+  //   return () => clearTimeout(timer); // Cleanup on unmount
+  // }, []);
 
   /* ---------- render ---------- */
   if (!LoggedIn) {
@@ -695,32 +695,41 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
           )}
         </>
       </AnimatePresence>
-      {/* {showDiv && ( */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="bg-gradient-to-r from-[#fcecd8]/50 to-[#1c2b3a]/10 border border-[#fcecd8] rounded-lg p-2 shadow-sm"
-      >
-        <div className="flex items-start gap-3">
-          <div className="text-[#1c2b3a] mt-0.5">
-            <AlertCircle size={20} />
+      {showDiv && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-gradient-to-r from-[#fcecd8]/50 to-[#1c2b3a]/10 border border-[#fcecd8] rounded-lg p-2 shadow-sm"
+        >
+          <div className="flex items-start gap-3">
+            <div className="text-[#1c2b3a] mt-0.5">
+              <AlertCircle size={20} />
+            </div>
+
+            <div>
+              <h4 className="font-medium text-[#1c2b3a] mb-1">
+                Important Information for Buyers
+              </h4>
+              <p className="text-sm text-gray-700">
+                Buyers must order via{" "}
+                <span className="font-semibold text-[#1c2b3a]">
+                  "Negotiate"
+                </span>{" "}
+                for seller approval. If <b>Authorize Order</b> isn't shown, let
+                buyer go back, use "Negotiate" button, and resend a message.
+                Seller Authorizes order after succesful negotiation.
+              </p>
+            </div>
+
+            <div 
+            onClick={()=>setShowDiv(false)}
+            className="text-[#1c2b3a] mt-0.5 text-right">
+              <X size={20} />
+            </div>
           </div>
-          <div>
-            <h4 className="font-medium text-[#1c2b3a] mb-1">
-              Important Information for Buyers
-            </h4>
-            <p className="text-sm text-gray-700">
-              Buyers must order via{" "}
-              <span className="font-semibold text-[#1c2b3a]">"Negotiate"</span>{" "}
-              for seller approval. If <b>Authorize Order</b> isn't shown, let buyer go back, use "Negotiate" button, and
-              resend a message. Seller Authorizes order after succesful
-              negotiation.
-            </p>
-          </div>
-        </div>
-      </motion.div>
-      {/* )} */}
+        </motion.div>
+      )}
 
       {/* Message input */}
       <motion.div

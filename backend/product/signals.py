@@ -23,8 +23,7 @@ def send_product_notifications(product_id):
     try:
         # Get product with related data in one query
         product = Product.objects.select_related('request__owner').prefetch_related(
-            'categories', 
-            'categories__customuser_set'
+            'categories'
         ).get(id=product_id)
         
         # Get all users interested in these categories (optimized query)
@@ -59,6 +58,7 @@ def send_product_notifications(product_id):
                     "Requested Product Uploaded", 
                     request_message
                 )
+                print("Product name:",product.name)
                 browser_notify(
                     product.request.owner.id,
                     "Requested Product Uploaded", 
