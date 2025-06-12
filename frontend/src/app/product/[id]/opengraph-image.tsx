@@ -24,7 +24,7 @@ interface Product {
 
 export default async function Image({ params }: { params: { id: string } }) {
   // Fetch product data
-  const res = await fetch(`https://jale.vercel.app/product/${params.id}`)
+  const res = await fetch(`https://jalev1.onrender.com/product/list/${params.id}/`)
   const product: Product = await res.json()
 
   return new ImageResponse(

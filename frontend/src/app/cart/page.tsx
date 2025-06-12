@@ -14,7 +14,7 @@ import {
   CreditCard,
   ArrowRight,
   CheckCircle,
-  AlertCircle,
+  AlertCircle
 } from "lucide-react";
 
 import { useAppContext } from "@/context";
@@ -42,7 +42,6 @@ interface CustomUser {
   categories: number[];
 }
 
-
 const Cart = () => {
   const { cart, setChangedCart, setUrl } = useAppContext();
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -50,9 +49,8 @@ const Cart = () => {
   const [isCheckingOut, setIsCheckingOut] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
-  const router = useRouter()
-  const pathname = usePathname()
-
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     setIsLoading(true);
@@ -175,20 +173,33 @@ const Cart = () => {
         className="max-w-4xl mx-auto"
       >
         {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="bg-gradient-to-r from-[#fcecd8] to-[#1c2b3a] p-3 rounded-lg">
-            <ShoppingCart size={24} className="text-white" />
+        <div className="flex justify-between">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="bg-gradient-to-r from-[#fcecd8] to-[#1c2b3a] p-3 rounded-lg">
+              <ShoppingCart size={24} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-[#1c2b3a]">
+                Shopping Cart
+              </h1>
+              <p className="text-gray-600">
+                {cart?.length > 0
+                  ? `${cart.length} item${
+                      cart.length > 1 ? "s" : ""
+                    } in your cart`
+                  : "Your cart is empty"}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-[#1c2b3a]">Shopping Cart</h1>
-            <p className="text-gray-600">
-              {cart?.length > 0
-                ? `${cart.length} item${
-                    cart.length > 1 ? "s" : ""
-                  } in your cart`
-                : "Your cart is empty"}
-            </p>
-          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => (window.location.href = "/orders")}
+            className="bg-gradient-to-r from-[#fcecd8] to-[#1c2b3a] hover:opacity-90 mb-8 px-1 text-white rounded-lg shadow-sm transition-all flex items-center font-semibold"
+          >
+            <Package size={20} />
+            <span>Orders</span>
+          </motion.button>
         </div>
 
         {/* Success message */}
@@ -446,15 +457,6 @@ const Cart = () => {
                 Looks like you haven't added any items to your cart yet. Start
                 shopping to fill it up!
               </p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => (window.location.href = "/orders")}
-                className="bg-gradient-to-r from-[#fcecd8] to-[#1c2b3a] hover:opacity-90 text-white px-8 py-3 rounded-lg shadow-sm transition-all flex items-center gap-2 font-semibold"
-              >
-                <ShoppingCart size={20} />
-                <span>Your Orders</span>
-              </motion.button>
             </div>
           </motion.div>
         )}
