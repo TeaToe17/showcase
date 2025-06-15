@@ -26,7 +26,16 @@ export default async function Image({ params }: { params: { id: string } }) {
   // Fetch product data
   const res = await fetch(`https://jalev1.onrender.com/product/list/${params.id}/`)
   const product: Product = await res.json()
-  console.log(product.image)
+
+  // Ensure we have a valid absolute URL for the image
+  const imageUrl =
+    product.image && product.image.trim() !== ""
+      ? product.image.startsWith("http")
+        ? product.image
+        : `https://jalev1.onrender.com${product.image}`
+      : "https://jale.vercel.app/placeholder.png"
+
+  console.log("Using image URL:", imageUrl)
 
   return new ImageResponse(
     <div
@@ -64,8 +73,9 @@ export default async function Image({ params }: { params: { id: string } }) {
             marginRight: 40,
           }}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={product.image || "/placeholder.svg"}
+            src={imageUrl || "/placeholder.svg"}
             alt={product.name}
             style={{
               width: "100%",
@@ -73,6 +83,7 @@ export default async function Image({ params }: { params: { id: string } }) {
               objectFit: "cover",
               borderRadius: 15,
             }}
+            crossOrigin="anonymous"
           />
         </div>
 
