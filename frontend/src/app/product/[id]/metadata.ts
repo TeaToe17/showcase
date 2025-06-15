@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+import type { Metadata } from "next"
 
 interface Product {
   id: number
@@ -17,17 +17,26 @@ interface Product {
 export async function generateMetadata({
   params,
 }: {
-  params: { id: string };
+  params: { id: string }
 }): Promise<Metadata> {
-  const res = await fetch(`https://jalev1.onrender.com/product/list/${params.id}/`);
-  const product: Product = await res.json();
+  const res = await fetch(`https://jalev1.onrender.com/product/list/${params.id}/`)
+  const product: Product = await res.json()
 
-  const hasValidImage = typeof product.image === "string" && product.image.trim() !== "";
-  const imageUrl = hasValidImage
-    ? `${product.image}`
-    : "https://jale.vercel.app/placeholder.png";
+  // Ensure we have a valid absolute URL for the image
+  const hasValidImage = typeof product.image === "string" && product.image.trim() !== ""
+  let imageUrl = "https://jale.vercel.app/placeholder.png" // fallback
 
-  const pageUrl = `https://jale.vercel.app/product/${product.id}`;
+  if (hasValidImage) {
+    // Check if the image URL is already absolute
+    if (product.image.startsWith("http")) {
+      imageUrl = product.image
+    } else {
+      // Construct absolute URL if it's relative
+      imageUrl = `https://jalev1.onrender.com${product.image}`
+    }
+  }
+
+  const pageUrl = `https://jale.vercel.app/product/${product.id}`
 
   return {
     title: product.name,
@@ -39,14 +48,14 @@ export async function generateMetadata({
       url: pageUrl,
       type: "website",
       siteName: "Jale",
-      // images: [
-      //   {
-      //     url: imageUrl,
-      //     width: 1200,
-      //     height: 630,
-      //     alt: product.name,
-      //   },
-      // ],
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: product.name,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
@@ -54,5 +63,5 @@ export async function generateMetadata({
       description: `Buy ${product.name} for ₦${product.price.toLocaleString()} on Jale.`,
       images: [imageUrl],
     },
-  };
+  }
 }
