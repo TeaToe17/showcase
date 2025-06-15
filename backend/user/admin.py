@@ -9,7 +9,7 @@ class CustomUserAdmin(admin.ModelAdmin):
 @admin.register(UserFCMToken)
 class UserFCMTokenAdmin(admin.ModelAdmin):
     model = UserFCMToken
-    list_display = ("token", "created_at")
+    list_display = ("user", "token", "created_at")
     # list_display = ("user", "token", "created_at")
 
 @admin.register(Message)

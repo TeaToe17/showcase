@@ -8,7 +8,7 @@ from .tasks import send_email
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    icon = models.CharField(max_length=5, null=True)
+    icon = models.CharField(max_length=20, null=True)
 
     def __str__(self):
         return self.name
@@ -35,11 +35,11 @@ class Product(models.Model):
 
     def save(self, *args, **kwargs):
         
-        # Reverting sold and reserved status when quantity is updated 
-        if self.pk:
-            if self.stock > 0:
-                self.sold = False
-                self.reserved = False
+        # # Reverting sold and reserved status when quantity is updated 
+        # if self.pk:
+        #     if self.stock > 1:
+        #         self.sold = False
+        #         self.reserved = False
 
         # # Increase owner_price by 20%
         # increased_price = self.price * Decimal('1.2')

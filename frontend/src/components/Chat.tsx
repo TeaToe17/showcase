@@ -722,9 +722,10 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
               </p>
             </div>
 
-            <div 
-            onClick={()=>setShowDiv(false)}
-            className="text-[#1c2b3a] mt-0.5 text-right">
+            <div
+              onClick={() => setShowDiv(false)}
+              className="text-[#1c2b3a] mt-0.5 text-right"
+            >
               <X size={20} />
             </div>
           </div>

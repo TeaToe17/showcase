@@ -26,6 +26,7 @@ export default async function Image({ params }: { params: { id: string } }) {
   // Fetch product data
   const res = await fetch(`https://jalev1.onrender.com/product/list/${params.id}/`)
   const product: Product = await res.json()
+  console.log(product.image)
 
   return new ImageResponse(
     <div

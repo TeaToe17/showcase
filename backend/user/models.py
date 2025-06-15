@@ -21,6 +21,9 @@ class UserFCMToken(models.Model):
     token = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f"{self.user.username}-{self.token}-{self.created_at}"
+
 class Message(models.Model):
     sender = models.ForeignKey("user.CustomUser", on_delete=models.CASCADE, related_name='sent_messages', null=True)
     receiver = models.ForeignKey("user.CustomUser", on_delete=models.CASCADE, related_name='received_messages', null=True)

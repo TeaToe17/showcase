@@ -30,6 +30,7 @@ class JWTAuthMiddleware(BaseMiddleware):
                 scope['user'] = await get_user(user_id)
                 # print("scope", scope)
             except Exception as e:
+                
                 print("JWTAuthMiddleware error:", e)
                 #Token is invalid or expired
                 
