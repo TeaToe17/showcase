@@ -1,18 +1,17 @@
 import ProductClientComponent from "@/components/ProductClientComponent";
 
+// -- Used ONLY for typing generateMetadata
 type PageProps = {
   params: {
-    id: string; // Even if the route param is a number, it's passed as string
+    id: string;
   };
 };
 
-// ✅ Server-side product fetch function
 async function getProduct(id: string) {
   const res = await fetch(
-    `http://localhost:8000/product/list/${id}/` ||
-      `https://jalev1.onrender.com/product/list/${id}/`,
+    `https://jalev1.onrender.com/product/list/${id}/`, // use a valid absolute endpoint
     {
-      cache: "no-store", // optional: disable caching if products update frequently
+      cache: "no-store",
     }
   );
 
@@ -23,7 +22,7 @@ async function getProduct(id: string) {
   return res.json();
 }
 
-// ✅ Dynamically generate meta tags for SEO/social sharing
+// ✅ Use params only here
 export async function generateMetadata({ params }: PageProps) {
   const product = await getProduct(params.id);
 
@@ -31,7 +30,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: product.name,
     description: `Get this product - ${product.name} on Jale for ${product.price}`,
     openGraph: {
-      images: [product.image], // must be absolute URL: https://...
+      images: [product.image],
       title: product.name,
       description: `Get this product - ${product.name} on Jale for ${product.price}`,
     },
@@ -44,7 +43,7 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-// ✅ Render the actual product page
-export default async function ProductPage() {
+// ✅ No params used here
+export default function ProductPage() {
   return <ProductClientComponent />;
 }
