@@ -26,7 +26,8 @@ export async function generateMetadata({
   const hasValidImage = typeof product.image === "string" && product.image.trim() !== ""
   let imageUrl = "https://jale.vercel.app/jalecover.jpg" // fallback
 
-  const pageUrl = `https://jale.vercel.app/product/${product.id}`
+  // const pageUrl = `https://jale.vercel.app/product/${product.id}`
+  const pageUrl = `https://jale.vercel.app/product/21`
 
   return {
     title: product.name,
@@ -40,7 +41,7 @@ export async function generateMetadata({
       siteName: "Jale",
       images: [
         {
-          url: product.image || imageUrl,
+          url: product.image ,
           width: 1200,
           height: 630,
           alt: product.name,
