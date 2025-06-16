@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     description: "You've been personally invited! Join now and get exclusive benefits.",
     images: [
       {
-        url: "https://jale.vercel.app/jalecover.png",
+        url: "https://jale.vercel.app/jalecover.jpg",
         width: 1200,
         height: 630,
         alt: "Join Our Platform - Buy. Sell. Negotiate. Flex.",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Join Our Amazing Platform - Buy. Sell. Negotiate. Flex.",
     description: "You've been personally invited! Join now and get exclusive benefits.",
-    images: ["https://jale.vercel.app/jalecover.png"],
+    images: ["https://jale.vercel.app/jalecover.jpg"],
   },
 }
 

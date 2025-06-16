@@ -24,33 +24,23 @@ export async function generateMetadata({
 
   // Ensure we have a valid absolute URL for the image
   const hasValidImage = typeof product.image === "string" && product.image.trim() !== ""
-  let imageUrl = "https://jale.vercel.app/placeholder.png" // fallback
-
-  if (hasValidImage) {
-    // Check if the image URL is already absolute
-    if (product.image.startsWith("http")) {
-      imageUrl = product.image
-    } else {
-      // Construct absolute URL if it's relative
-      imageUrl = `https://jalev1.onrender.com${product.image}`
-    }
-  }
+  let imageUrl = "https://jale.vercel.app/jalecover.jpg" // fallback
 
   const pageUrl = `https://jale.vercel.app/product/${product.id}`
 
   return {
     title: product.name,
     description: `Buy ${product.name} for ₦${product.price.toLocaleString()} on Jale.`,
-    metadataBase: new URL("https://jale.vercel.app"),
+    // metadataBase: new URL("https://jale.vercel.app"),
     openGraph: {
       title: product.name,
-      description: `Buy ${product.name} for ₦${product.price.toLocaleString()} on Jale.`,
+      description: `Buy ${product.name} on Jale.`,
       url: pageUrl,
       type: "website",
       siteName: "Jale",
       images: [
         {
-          url: imageUrl,
+          url: `${product.image}`,
           width: 1200,
           height: 630,
           alt: product.name,
