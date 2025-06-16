@@ -45,10 +45,6 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 // ✅ Render the actual product page
-export default async function ProductPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function ProductPage() {
   return <ProductClientComponent />;
 }
