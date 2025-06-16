@@ -14,7 +14,7 @@ import {
   CreditCard,
   ArrowRight,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 
 import { useAppContext } from "@/context";
@@ -118,13 +118,15 @@ const Cart = () => {
       showSuccess("Order placed successfully!");
       setChangedCart(true);
       const productNames = cart.map((item) => item.product_name);
-      router.push(
-        `https://wa.me/2347046938727?text=Hello%20I%20am%20${encodeURIComponent(
-          user.username
-        )},%0AI%20just%20placed%20an%20order%20for%20${encodeURIComponent(
-          productNames.toString()
-        )}`
-      );
+      const timeout = setTimeout(() => {
+        router.push(
+          `https://wa.me/2347046938727?text=Hello%20I%20am%20${encodeURIComponent(
+            user.username
+          )},%0AI%20just%20placed%20an%20order%20for%20${encodeURIComponent(
+            productNames.toString()
+          )}`
+        );
+      }, 2000); // delay in milliseconds
     } catch (err) {
       console.error(err);
       showError("Failed to place order");
