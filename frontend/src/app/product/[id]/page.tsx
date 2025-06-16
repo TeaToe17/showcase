@@ -1,15 +1,8 @@
 import ProductClientComponent from "@/components/ProductClientComponent";
 
-// -- Used ONLY for typing generateMetadata
-type PageProps = {
-  params: {
-    id: string;
-  };
-};
-
 async function getProduct(id: string) {
   const res = await fetch(
-    `https://jalev1.onrender.com/product/list/${id}/`, // use a valid absolute endpoint
+    `https://jalev1.onrender.com/product/list/${id}/`,
     {
       cache: "no-store",
     }
@@ -22,8 +15,12 @@ async function getProduct(id: string) {
   return res.json();
 }
 
-// ✅ Use params only here
-export async function generateMetadata({ params }: PageProps) {
+// ✅ Use inline typing here, DO NOT define PageProps manually
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}) {
   const product = await getProduct(params.id);
 
   return {
@@ -43,7 +40,7 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-// ✅ No params used here
+// ✅ This page no longer takes params because your client component uses useParams
 export default function ProductPage() {
   return <ProductClientComponent />;
 }
