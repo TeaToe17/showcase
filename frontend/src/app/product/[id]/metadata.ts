@@ -40,7 +40,7 @@ export async function generateMetadata({
       siteName: "Jale",
       images: [
         {
-          url: `${product.image}`,
+          url: product.image || imageUrl,
           width: 1200,
           height: 630,
           alt: product.name,
