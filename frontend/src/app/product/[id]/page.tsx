@@ -50,7 +50,5 @@ export default async function ProductPage({
 }: {
   params: { id: string };
 }) {
-  const product = await getProduct(params.id);
-
   return <ProductClientComponent />;
 }
