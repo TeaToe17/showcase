@@ -19,7 +19,8 @@ export async function generateMetadata(
   const res = await fetch(
     `https://jalev1.onrender.com/product/list/?product=${id}`,
     {
-      cache: "no-store",
+      cache: "force-cache",
+      // cache: "no-store",
     }
   );
 
