@@ -3,17 +3,10 @@ import ProductClientComponent from "@/components/ProductClientComponent";
 import { Metadata } from "next";
 import { ResolvingMetadata } from "next";
 
-type Props = {
-  params: { id: string };
-};
-
 async function getProduct(id: string) {
-  const res = await fetch(
-    `https://jalev1.onrender.com/product/list/${id}/`,
-    {
-      cache: "no-store",
-    }
-  );
+  const res = await fetch(`https://jalev1.onrender.com/product/list/${id}/`, {
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     throw new Error("Product not found");
@@ -24,7 +17,7 @@ async function getProduct(id: string) {
 
 // ✅ Use inline typing here, DO NOT define PageProps manually
 export async function generateMetadata(
-  { params }: Props,
+  { params }: { params: { id: string } },
   parent?: ResolvingMetadata
 ): Promise<Metadata> {
   const product = await getProduct(params.id);
@@ -45,7 +38,6 @@ export async function generateMetadata(
     },
   };
 }
-
 
 // ✅ This page no longer takes params because your client component uses useParams
 export default function ProductPage() {
