@@ -1,133 +1,140 @@
-"use client"
+"use client";
 
-import api from "@/lib/api"
-import type React from "react"
-import { useEffect, useState } from "react"
-import { useRouter, usePathname } from "next/navigation"
-import { useAppContext } from "@/context"
-import { ACCESS_TOKEN } from "@/lib/constant"
-import { motion } from "framer-motion"
-import { Upload, Loader2, AlertCircle, Check } from "lucide-react"
-import Image from "next/image"
+import api from "@/lib/api";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useAppContext } from "@/context";
+import { ACCESS_TOKEN } from "@/lib/constant";
+import { motion } from "framer-motion";
+import { Upload, Loader2, AlertCircle, Check } from "lucide-react";
+import Image from "next/image";
+import { AxiosError } from "axios";
 
 interface Request {
-  id: number
-  name: string
-  image: string
-  imagefile: string
-  description: string
+  id: number;
+  name: string;
+  image: string;
+  imagefile: string;
+  description: string;
 }
 
 const Requests = () => {
-  const router = useRouter()
-  const pathname = usePathname()
-  const { setUrl } = useAppContext()
+  const router = useRouter();
+  const pathname = usePathname();
+  const { setUrl } = useAppContext();
 
-  const [requests, setRequests] = useState<Request[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const fetchRequests = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const res = await api.get("request/list/")
-      setRequests(res.data)
-      setError(null)
-    } catch (err: any) {
-      console.error(err)
-      if (err.response && err.response.data) {
-        setError(err.response.data.message || "Failed to fetch requests")
-      } else {
-        setError("An unexpected error occurred")
+      const res = await api.get("request/list/");
+      setRequests(res.data);
+      setError(null);
+    } catch (err: unknown) {
+      if (err instanceof AxiosError) {
+        if (err.response && err.response.data) {
+          setError(err.response.data.message || "Failed to fetch requests");
+        } else {
+          setError("An unexpected error occurred");
+        }
       }
+      console.error(err);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchRequests()
-  }, [])
+    fetchRequests();
+  }, []);
 
   const useIsLoggedIn = () => {
-    const [isLoggedIn, setIsLoggedIn] = useState(false)
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
       if (typeof window !== "undefined") {
-        const token = localStorage.getItem(ACCESS_TOKEN)
-        setIsLoggedIn(!!token)
+        const token = localStorage.getItem(ACCESS_TOKEN);
+        setIsLoggedIn(!!token);
       }
-    }, [])
+    }, []);
 
-    return isLoggedIn
-  }
+    return isLoggedIn;
+  };
 
-  const [productName, setProductName] = useState<string>("")
-  const [image, setImage] = useState<any>(null)
-  const [description, setDescription] = useState<string>("")
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const isLoggedIn = useIsLoggedIn()
+  const [productName, setProductName] = useState<string>("");
+  const [image, setImage] = useState<File | null>(null);
+  const [description, setDescription] = useState<string>("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const isLoggedIn = useIsLoggedIn();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setImage(file)
-      setPreviewUrl(URL.createObjectURL(file))
+      const file = e.target.files[0];
+      setImage(file);
+      setPreviewUrl(URL.createObjectURL(file));
     } else {
-      setImage(null)
-      setPreviewUrl(null)
+      setImage(null);
+      setPreviewUrl(null);
     }
-  }
+  };
 
   const CreateRequest = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    setError(null)
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
 
-    const formData = new FormData()
-    formData.append("name", productName)
-    if (image) formData.append("imagefile", image)
-    formData.append("description", description)
+    const formData = new FormData();
+    formData.append("name", productName);
+    if (image) formData.append("imagefile", image);
+    formData.append("description", description);
 
     try {
       const response = await api.post("request/create/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
-      })
+      });
 
-      setSuccessMessage("Request successfully placed!")
-      setTimeout(() => setSuccessMessage(null), 3000)
+      setSuccessMessage("Request successfully placed!");
+      setTimeout(() => setSuccessMessage(null), 3000);
 
-      fetchRequests()
+      fetchRequests();
 
       // Open WhatsApp in a new tab
       window.open(
-        `https://wa.me/2347046938727?text=Hello%20%0AI%20just%20made%20a%20request%20for%20${encodeURIComponent(productName ?? "")}%20`,
-        "_blank",
-      )
+        `https://wa.me/2347046938727?text=Hello%20%0AI%20just%20made%20a%20request%20for%20${encodeURIComponent(
+          productName ?? ""
+        )}%20`,
+        "_blank"
+      );
 
-      setRequests((prev) => [...prev, response.data])
-      setProductName("")
-      setImage(null)
-      setPreviewUrl(null)
-      setDescription("")
-    } catch (err: any) {
-      console.error("Failed to create request:", err)
-      setError(err.response?.data?.message || "Failed to create request")
+      setRequests((prev) => [...prev, response.data]);
+      setProductName("");
+      setImage(null);
+      setPreviewUrl(null);
+      setDescription("");
+    } catch (err: unknown) {
+      if (err instanceof AxiosError) {
+        console.error("Failed to create request:", err);
+        setError(err.response?.data?.message || "Failed to create request");
+      }
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const CreateProduct = (request: Request) => {
     if (isLoggedIn) {
-      router.push(`/myproducts/${request.id}/`)
+      router.push(`/myproducts/${request.id}/`);
     } else {
-      setUrl("myproducts/" + request.id)
-      router.push(`/login/`)
+      setUrl("myproducts/" + request.id);
+      router.push(`/login/`);
     }
-  }
+  };
 
   // Animation variants
   const containerVariants = {
@@ -138,7 +145,7 @@ const Requests = () => {
         staggerChildren: 0.1,
       },
     },
-  }
+  };
 
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
@@ -151,7 +158,7 @@ const Requests = () => {
         damping: 24,
       },
     },
-  }
+  };
 
   return (
     <div className="bg-[#f8f9fa] min-h-screen px-4 sm:px-8 md:px-16 lg:px-24 py-8 space-y-8">
@@ -161,8 +168,12 @@ const Requests = () => {
         transition={{ duration: 0.5 }}
         className="text-center mb-8"
       >
-        <h1 className="text-3xl md:text-4xl font-bold text-[#1c2b3a]">Product Requests</h1>
-        <p className="text-gray-600 mt-2">Find what you're looking for or help others find what they need</p>
+        <h1 className="text-3xl md:text-4xl font-bold text-[#1c2b3a]">
+          Product Requests
+        </h1>
+        <p className="text-gray-600 mt-2">
+          Find what you are looking for or help others find what they need
+        </p>
       </motion.div>
 
       {/* Error message */}
@@ -196,7 +207,9 @@ const Requests = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <p className="text-lg font-medium text-[#1c2b3a]">Didn't find a Product? Place a request below:</p>
+        <p className="text-lg font-medium text-[#1c2b3a]">
+          Did not find a Product? Place a request below:
+        </p>
       </motion.div>
 
       {/* Create Request Form */}
@@ -211,7 +224,10 @@ const Requests = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-4 md:col-span-1">
                 <div>
-                  <label htmlFor="productName" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="productName"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Product Name
                   </label>
                   <input
@@ -226,7 +242,10 @@ const Requests = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="description"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Description
                   </label>
                   <textarea
@@ -243,11 +262,20 @@ const Requests = () => {
 
               <div className="space-y-4 md:col-span-1">
                 <div>
-                  <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="image"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Image (Optional)
                   </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer">
-                    <input id="image" type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                    <input
+                      id="image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
                     <label htmlFor="image" className="cursor-pointer">
                       {previewUrl ? (
                         <div className="relative h-40 w-full">
@@ -262,8 +290,12 @@ const Requests = () => {
                       ) : (
                         <div className="flex flex-col items-center justify-center py-4">
                           <Upload className="h-10 w-10 text-gray-400 mb-2" />
-                          <p className="text-sm text-gray-500">Click to upload an image</p>
-                          <p className="text-xs text-gray-400 mt-1">PNG, JPG, GIF up to 5MB</p>
+                          <p className="text-sm text-gray-500">
+                            Click to upload an image
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            PNG, JPG, GIF up to 5MB
+                          </p>
                         </div>
                       )}
                     </label>
@@ -290,14 +322,18 @@ const Requests = () => {
             </motion.button>
           </form>
         ) : (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-8 space-y-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-8 space-y-4"
+          >
             <p className="text-gray-700">Login to create a product request</p>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
-                setUrl(pathname)
-                router.push("/login")
+                setUrl(pathname);
+                router.push("/login");
               }}
               className="bg-gradient-to-r from-[#fcecd8] to-[#1c2b3a] hover:opacity-90 text-white px-6 py-2 rounded-md shadow-sm transition-all"
             >
@@ -308,9 +344,16 @@ const Requests = () => {
       </motion.div>
 
       {/* Requested Products List */}
-      <motion.div initial="hidden" animate="visible" variants={containerVariants} className="space-y-6">
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="space-y-6"
+      >
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-semibold text-[#1c2b3a]">Requested Products</h2>
+          <h2 className="text-2xl font-semibold text-[#1c2b3a]">
+            Requested Products
+          </h2>
           <button
             onClick={fetchRequests}
             className="text-[#1c2b3a] hover:text-opacity-70 text-sm font-medium flex items-center gap-1"
@@ -340,7 +383,10 @@ const Requests = () => {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-sm p-4 animate-pulse">
+              <div
+                key={index}
+                className="bg-white rounded-xl shadow-sm p-4 animate-pulse"
+              >
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
                 <div className="h-40 bg-gray-200 rounded mb-4"></div>
                 <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
@@ -351,16 +397,21 @@ const Requests = () => {
           </div>
         ) : requests.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {requests.map((request, index) => (
+            {requests.map((request) => (
               <motion.div
                 key={request.id}
                 variants={itemVariants}
-                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                whileHover={{
+                  y: -5,
+                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
+                }}
                 className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 transition-all"
               >
                 <div className="relative h-48 w-full bg-gray-100">
                   <Image
-                    src={request.image || "/placeholder.svg?height=200&width=300"}
+                    src={
+                      request.image || "/placeholder.svg?height=200&width=300"
+                    }
                     alt={request.name}
                     fill
                     style={{ objectFit: "cover" }}
@@ -368,8 +419,12 @@ const Requests = () => {
                   />
                 </div>
                 <div className="p-4 space-y-2">
-                  <h3 className="text-lg font-semibold text-[#1c2b3a] line-clamp-1">{request.name}</h3>
-                  <p className="text-gray-600 text-sm line-clamp-2">{request.description}</p>
+                  <h3 className="text-lg font-semibold text-[#1c2b3a] line-clamp-1">
+                    {request.name}
+                  </h3>
+                  <p className="text-gray-600 text-sm line-clamp-2">
+                    {request.description}
+                  </p>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -384,13 +439,18 @@ const Requests = () => {
             ))}
           </div>
         ) : (
-          <motion.div variants={itemVariants} className="bg-white rounded-xl shadow-sm p-8 text-center">
-            <p className="text-gray-500">No requests found. Be the first to request a product!</p>
+          <motion.div
+            variants={itemVariants}
+            className="bg-white rounded-xl shadow-sm p-8 text-center"
+          >
+            <p className="text-gray-500">
+              No requests found. Be the first to request a product!
+            </p>
           </motion.div>
         )}
       </motion.div>
     </div>
-  )
-}
+  );
+};
 
-export default Requests
+export default Requests;

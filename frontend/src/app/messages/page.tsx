@@ -2,7 +2,7 @@
 
 import { useAppContext } from "@/context";
 import api from "@/lib/api";
-import { act, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -13,7 +13,8 @@ import {
   Loader2,
   MessageSquareOff,
 } from "lucide-react";
-import { IsUser, getDecodedToken, fetchUser } from "@/lib/utils";
+import { IsUser, getDecodedToken } from "@/lib/utils";
+import { AxiosError } from "axios";
 
 type ChatPreview = {
   sender: number;
@@ -34,7 +35,7 @@ type Message = {
 
 const Messages = () => {
   const router = useRouter();
-  const [chatBar, setChatBar] = useState<ChatPreview>({
+  const [chatBar] = useState<ChatPreview>({
     sender: 0,
     receiver: 0,
     latest_message: "",
@@ -49,37 +50,7 @@ const Messages = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { globalMessages }: { globalMessages: Message | undefined } =
     useAppContext();
-  const {
-    setMessageCount,
-    chats,
-    setChats,
-    currentUser,
-    setCurrentUser,
-    setMessageTrigger,
-  } = useAppContext();
-
-  const formatTime = (timeString: string) => {
-    try {
-      const date = new Date(timeString);
-      const now = new Date();
-      const diffMs = now.getTime() - date.getTime();
-      const diffMins = Math.floor(diffMs / 60000);
-      const diffHours = Math.floor(diffMins / 60);
-      const diffDays = Math.floor(diffHours / 24);
-
-      if (diffMins < 1) return "Just now";
-      if (diffMins < 60) return `${diffMins}m ago`;
-      if (diffHours < 24) return `${diffHours}h ago`;
-      if (diffDays < 7) return `${diffDays}d ago`;
-
-      return date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-    } catch (e) {
-      return timeString || "Unknown time";
-    }
-  };
+  const { chats, setChats, currentUser } = useAppContext();
 
   const fetchPreviews = async () => {
     setIsLoading(true);
@@ -89,12 +60,13 @@ const Messages = () => {
     if (decodedToken) {
       try {
         const res = await api.get("user/chatpreview/list/");
-        const data: ChatPreview[] = res.data;
         console.log(res.data);
         setChats(res.data);
-      } catch (error: any) {
-        console.error(error);
-        setError(error.response?.data?.message || "Failed to load messages");
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          console.error(error);
+          setError(error.response?.data?.message || "Failed to load messages");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -107,15 +79,6 @@ const Messages = () => {
   useEffect(() => {
     const decoded = getDecodedToken();
     if (!globalMessages || !decoded) return;
-
-    try {
-      const { sender_id, receiver_id, text, created_at } = globalMessages;
-    } catch (error) {
-      console.error(
-        "Error decoding token or processing globalMessages:",
-        error
-      );
-    }
   }, [globalMessages]);
 
   useEffect(() => {

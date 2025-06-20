@@ -1,12 +1,3 @@
 {
-  "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint"],
-  "extends": [
-    "next/core-web-vitals",
-    "next",
-    "plugin:@typescript-eslint/recommended"
-  ],
-  "rules": {
-    "@typescript-eslint/no-unused-expressions": ["error", { "allowShortCircuit": true }]
-  }
+  "extends": ["next/core-web-vitals", "next/typescript"]
 }

@@ -8,21 +8,17 @@ import {
   Package,
   Clock,
   CheckCircle,
-  XCircle,
   Phone,
   MessageCircle,
   Calendar,
-  DollarSign,
-  Eye,
-  User,
   Hash,
   AlertCircle,
   ShoppingBag,
   ArrowRight,
-  Loader2,
 } from "lucide-react";
 
 import api from "@/lib/api";
+import { AxiosError } from "axios";
 
 interface Order {
   id: number;
@@ -44,7 +40,7 @@ const Orders = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
-  const router = useRouter()
+  const router = useRouter();
 
   useEffect(() => {
     loadOrders();
@@ -56,24 +52,16 @@ const Orders = () => {
       const response = await api.get("order/list/");
       setOrders(response.data);
       setError("");
-    } catch (err: any) {
-      console.error("Error loading orders:", err);
-      setError(
-        err.response?.data?.message || err.message || "Failed to load orders"
-      );
+    } catch (err: unknown) {
+      if (err instanceof AxiosError) {
+        console.error("Error loading orders:", err);
+        setError(
+          err.response?.data?.message || err.message || "Failed to load orders"
+        );
+      }
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const showSuccess = (message: string) => {
-    setSuccess(message);
-    setTimeout(() => setSuccess(""), 3000);
-  };
-
-  const showError = (message: string) => {
-    setError(message);
-    setTimeout(() => setError(""), 3000);
   };
 
   const getStatusIcon = (completed: boolean) => {
@@ -101,7 +89,7 @@ const Orders = () => {
   };
 
   const openWhatsApp = (contact: string, orderDetails: Order) => {
-    const message = `Hello! I'm ${
+    const message = `Hello! Im ${
       orderDetails.buyer_name
     } and texting regarding Order #${orderDetails.id} for ${
       orderDetails?.product_name || "your product"
@@ -264,9 +252,9 @@ const Orders = () => {
                 </h2>
 
                 <div className="space-y-4">
-                  {dayOrders.map((order, index) => (
+                  {dayOrders.map((order) => (
                     <motion.div
-                      onClick={()=>router.push(`/product/${order.product}`)}
+                      onClick={() => router.push(`/product/${order.product}`)}
                       key={order.id}
                       variants={itemVariants}
                       whileHover={{
@@ -394,7 +382,7 @@ const Orders = () => {
                 No orders yet
               </h3>
               <p className="text-gray-500 mb-8 max-w-md">
-                You haven't received any orders yet. Share your products to
+                You have not received any orders yet. Share your products to
                 start getting orders!
               </p>
               <motion.button

@@ -21,12 +21,40 @@ interface ChatProps {
   receiverId: number;
 }
 
+// Interface for API response from backend
+interface ApiMessage {
+  content: string;
+  sender: number | string;
+  timestamp: string;
+}
+
+type CustomUser = {
+  id: number;
+  username: string;
+  whatsapp: string;
+  call: string;
+  image: string;
+  email: string;
+  referral_points: number;
+  categories: number[];
+};
+
+interface Message {
+  text: string;
+  sender_id: number | string | undefined;
+  created_at: string;
+  analyzing?: boolean; // Only present in pending messages
+  scope?: string; // From WebSocket data
+  product_id?: number;
+  owner_id?: number;
+}
+
 const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [ws, setWs] = useState<WebSocket | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [pendingMessages, setPendingMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [pendingMessages, setPendingMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const { currentProduct, setCurrentProduct, setMessageTrigger } =
     useAppContext();
@@ -38,7 +66,7 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [showOrderSuccess, setShowOrderSuccess] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<CustomUser | null>(null);
   const [showDiv, setShowDiv] = useState(true);
 
   // Load product and owner IDs from localStorage
@@ -70,11 +98,11 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
       const resDict = response.data;
 
       if (Array.isArray(resDict) && resDict.length !== 0) {
-        const formattedMessage = resDict.map((msg: any) => ({
+        const formattedMessage = resDict.map((msg: ApiMessage) => ({
           text: msg.content,
           sender_id: msg.sender,
           // created_at: msg.timestamp,
-          created_at: formatTime(msg.timestamp),
+          created_at: formatTime(msg.timestamp || ""),
         }));
         setMessages(formattedMessage);
       }
@@ -82,7 +110,7 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
       // Get current user
       const user = await fetchUser();
       setCurrentUser(user);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to fetch chat history", error);
       setError("Failed to load chat history, refresh.");
     } finally {
@@ -311,7 +339,7 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
           currentProduct?.name ?? ""
         )}%20(${currentProduct?.id})`
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Unexpected error in HandleOrder:", error);
       setError("An unexpected error occurred. Please try again.");
     } finally {
@@ -352,7 +380,7 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
           );
         }, Math.random() * 1000 + 500); // Random time between 500-1500ms
       } catch (error) {
-        setError("Failed to send message. Please try again.");
+        setError(`Failed to send message. Please try again, ${error}`);
         // Remove the pending message if there was an error
         setPendingMessages((prev) => prev.filter((msg) => msg.text !== input));
       } finally {
@@ -716,7 +744,7 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
                 <span className="font-semibold text-[#1c2b3a]">
                   "Negotiate"
                 </span>{" "}
-                for seller approval. If <b>Authorize Order</b> isn't shown, let
+                for seller approval. If <b>Authorize Order</b> isnt shown, let
                 buyer go back, use "Negotiate" button, and resend a message.
                 Seller Authorizes order after succesful negotiation.
               </p>

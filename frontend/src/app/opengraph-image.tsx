@@ -58,7 +58,7 @@ export default async function Image() {
               marginBottom: "20px",
             }}
           >
-            You're Invited!
+            Youre Invited!
           </div>
 
           <div

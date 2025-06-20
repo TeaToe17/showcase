@@ -16,13 +16,13 @@ import {
   X,
   Gift,
   Users,
-  Clock,
   Copy,
   Share2,
   MessageCircle,
   Mail,
   Twitter,
 } from "lucide-react";
+import { AxiosError } from "axios";
 
 interface CustomUser {
   id: number;
@@ -41,7 +41,6 @@ interface Message {
 }
 
 const Profile = () => {
-  const router = useRouter();
   const [user, setUser] = useState<CustomUser | null>(null);
   const [username, setUsername] = useState<string>("");
   const [whatsapp, setWhatsapp] = useState<string>("");
@@ -203,8 +202,10 @@ const Profile = () => {
         nameMap[cat.id] = cat.name;
       });
       setCategoryNames(nameMap);
-    } catch (err: any) {
-      console.error("Failed to load categories:", err);
+    } catch (err: unknown) {
+      if (err instanceof AxiosError) {
+        console.error("Failed to load categories:", err);
+      }
     }
   };
 

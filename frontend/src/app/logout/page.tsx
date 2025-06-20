@@ -6,7 +6,6 @@ import { useAppContext } from "@/context";
 import { motion } from "framer-motion";
 import { LogIn, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
-import { ACCESS_TOKEN } from "@/lib/constant";
 
 const Logout = () => {
   const { setIsLoggedIn, isLoggedIn } = useAppContext();

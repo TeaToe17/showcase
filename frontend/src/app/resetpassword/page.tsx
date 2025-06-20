@@ -15,6 +15,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
+import { AxiosError } from "axios";
 
 const ResetPasswordContent = () => {
   const searchParams = useSearchParams();
@@ -130,26 +131,30 @@ const ResetPasswordContent = () => {
       setTimeout(() => {
         router.push("/login");
       }, 3000);
-    } catch (err: any) {
-      console.error("Password reset error:", err);
+    } catch (err: unknown) {
+      if (err instanceof AxiosError) {
+        console.error("Password reset error:", err);
 
-      if (err.response?.data?.password) {
-        setFormErrors({
-          ...formErrors,
-          password: err.response.data.password[0],
-        });
-      } else if (err.response?.data?.non_field_errors) {
-        setError(err.response.data.non_field_errors[0]);
-      } else if (err.response?.data?.detail) {
-        setError(err.response.data.detail);
-      } else if (err.response?.data) {
-        setError(
-          typeof err.response.data === "string"
-            ? err.response.data
-            : "Failed to reset password. Please try again."
-        );
-      } else {
-        setError("Network error. Please check your connection and try again.");
+        if (err.response?.data?.password) {
+          setFormErrors({
+            ...formErrors,
+            password: err.response.data.password[0],
+          });
+        } else if (err.response?.data?.non_field_errors) {
+          setError(err.response.data.non_field_errors[0]);
+        } else if (err.response?.data?.detail) {
+          setError(err.response.data.detail);
+        } else if (err.response?.data) {
+          setError(
+            typeof err.response.data === "string"
+              ? err.response.data
+              : "Failed to reset password. Please try again."
+          );
+        } else {
+          setError(
+            "Network error. Please check your connection and try again."
+          );
+        }
       }
     } finally {
       setLoading(false);

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; // For navigation if needed
 import api from "@/lib/api";
 
 interface Params {

@@ -6,7 +6,6 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   Search,
-  ShoppingCart,
   ChevronRight,
   ChevronLeft,
   Flame,
@@ -15,6 +14,7 @@ import {
   Crown,
 } from "lucide-react";
 import { fetchProducts, fetchCategories } from "@/lib/utils";
+import { AxiosError } from "axios";
 
 // Define the TypeScript interface for a single product
 interface Product {
@@ -27,7 +27,7 @@ interface Product {
   used: boolean;
   sold: boolean;
   negotiable: boolean;
-  extra_field: {};
+  extra_field: Record<string | number, string | number | null>;
   categories: number[];
   owner: number;
   is_sticky: boolean;
@@ -79,9 +79,11 @@ export default function Home() {
       try {
         const productsData = await fetchProducts();
         setProducts(productsData);
-      } catch (err: any) {
-        console.error(err);
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof AxiosError) {
+          console.error(err);
+          setError(err.message);
+        }
       } finally {
         setIsLoading(false);
       }

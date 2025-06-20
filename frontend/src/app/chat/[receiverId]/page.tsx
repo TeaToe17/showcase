@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter, useParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import ChatWindow from '@/components/Chat';
 
 export default function ChatPage() {

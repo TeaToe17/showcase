@@ -21,16 +21,6 @@ import { useAppContext } from "@/context";
 import api from "@/lib/api";
 import { fetchUser } from "@/lib/utils";
 
-interface CartItem {
-  id: number;
-  product: number;
-  product_image: string;
-  quantity: number;
-  product_stock: number;
-  product_name?: string;
-  product_price?: number;
-}
-
 interface CustomUser {
   id: number;
   username: string;
@@ -118,7 +108,7 @@ const Cart = () => {
       showSuccess("Order placed successfully!");
       setChangedCart(true);
       const productNames = cart.map((item) => item.product_name);
-      const timeout = setTimeout(() => {
+      setTimeout(() => {
         router.push(
           `https://wa.me/2347046938727?text=Hello%20I%20am%20${encodeURIComponent(
             user.username
@@ -268,7 +258,7 @@ const Cart = () => {
                 variants={containerVariants}
                 className="space-y-4"
               >
-                {cart.map((item, index) => (
+                {cart.map((item) => (
                   <motion.div
                     key={item.id}
                     variants={itemVariants}
@@ -456,7 +446,7 @@ const Cart = () => {
                 Your cart is empty
               </h3>
               <p className="text-gray-500 mb-8 max-w-md">
-                Looks like you haven't added any items to your cart yet. Start
+                Looks like you havent added any items to your cart yet. Start
                 shopping to fill it up!
               </p>
             </div>
