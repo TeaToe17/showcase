@@ -20,7 +20,7 @@ class ChatConsumer(WebsocketConsumer):
         params = parse_qs(query_string)
         self.product_id = params.get("product", [None])[0]
         self.owner_id = params.get("owner", [None])[0]
-        self.warning = "Formal tone only; personal commentary is not permitted."
+        self.warning = "Formal tone only, contact exchange is not permitted."
 
         self.sender = self.scope["user"]  # The authenticated user making the connection
         self.receiver_id = self.scope["url_route"]["kwargs"]["user_id"]  # The user being chatted with

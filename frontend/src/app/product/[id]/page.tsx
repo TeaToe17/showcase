@@ -1,28 +1,35 @@
-import type { Metadata } from "next"
-import type { ResolvingMetadata } from "next"
-import ProductClientComponent from "@/components/ProductClientComponent"
+import type { Metadata } from "next";
+import type { ResolvingMetadata } from "next";
+import ProductClientComponent from "@/components/ProductClientComponent";
 
 // ✅ Updated typing for Next.js 15 - params is now a Promise
 type GenerateMetadataParams = {
   params: Promise<{
-    id: string
-  }>
-}
+    id: string;
+  }>;
+};
 
 export async function generateMetadata(
   { params }: GenerateMetadataParams,
-  parent: ResolvingMetadata,
+  parent: ResolvingMetadata
 ): Promise<Metadata> {
   // ✅ Await the params Promise in Next.js 15
-  const { id } = await params
+  const { id } = await params;
 
-  const res = await fetch(`https://jalev1.onrender.com/product/list/${id}/`, { cache: "no-store" })
+  const res = await fetch(
+    `https://jalev1.onrender.com/product/list/?product=${id}`,
+    {
+      cache: "no-store",
+    }
+  );
 
   if (!res.ok) {
-    throw new Error("Product not found")
+    console.error("Product not found");
   }
 
-  const product = await res.json()
+  console.log(res);
+  const product = await res.json();
+  console.log(product);
 
   return {
     title: product.name,
@@ -34,7 +41,7 @@ export async function generateMetadata(
       card: "summary_large_image",
       images: [product.image],
     },
-  }
+  };
 }
 
 // ✅ Page component also needs to await params in Next.js 15

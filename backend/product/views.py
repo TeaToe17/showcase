@@ -37,8 +37,12 @@ class ProductListView(generics.ListAPIView):
                 output_field=DateTimeField()
             )
         ).order_by('-is_sticky', '-effective_sort_date')
+
+        ## This particular id is for request in seller View to get all products owned by a user
         url_id = self.kwargs.get("id")
         user = self.request.user
+
+        product_id = self.request.GET.get("product")
 
         try:
             updated_count = Product.objects.filter(
@@ -53,6 +57,8 @@ class ProductListView(generics.ListAPIView):
 
         if url_id and user.is_authenticated and int(url_id) == int(user.id):
             return queryset.filter(owner__id=url_id)
+        if product_id:
+            queryset = queryset.filter(id=int(product_id))
         return queryset
             
 

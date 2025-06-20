@@ -66,7 +66,7 @@ const Product = ({ product }: Productprops) => {
         </div>
         <div className="mt-2 flex justify-between items-center">
           <p className="font-bold text-[#1c2b3a]">
-            ₦{product.price.toLocaleString()}
+            ₦{(Number(product.price) * 0.9).toLocaleString()}
           </p>
           {product.stock > 0 ? (
             <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">

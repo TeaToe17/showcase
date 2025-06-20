@@ -453,7 +453,7 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
                 </h3>
                 <p className="text-gray-600 mb-6">
                   Your order has been successfully authorized. Buyer will be
-                  redirected to WhatsApp for delivery follow up.
+                  redirected to WhatsApp for delivery follow up and Seller would be contacted.
                 </p>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
