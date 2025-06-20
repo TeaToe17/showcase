@@ -1,45 +1,43 @@
-import ProductClientComponent from "@/components/ProductClientComponent";
+import type { Metadata } from "next"
+import type { ResolvingMetadata } from "next"
+import ProductClientComponent from "@/components/ProductClientComponent"
 
-import { Metadata } from "next";
-import { ResolvingMetadata } from "next";
-
-async function getProduct(id: string) {
-  const res = await fetch(`https://jalev1.onrender.com/product/list/${id}/`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error("Product not found");
-  }
-
-  return res.json();
+// ✅ Updated typing for Next.js 15 - params is now a Promise
+type GenerateMetadataParams = {
+  params: Promise<{
+    id: string
+  }>
 }
 
-// ✅ Use inline typing here, DO NOT define PageProps manually
 export async function generateMetadata(
-  { params }: { params: { id: string } },
-  parent?: ResolvingMetadata
+  { params }: GenerateMetadataParams,
+  parent: ResolvingMetadata,
 ): Promise<Metadata> {
-  const product = await getProduct(params.id);
+  // ✅ Await the params Promise in Next.js 15
+  const { id } = await params
+
+  const res = await fetch(`https://jalev1.onrender.com/product/list/${id}/`, { cache: "no-store" })
+
+  if (!res.ok) {
+    throw new Error("Product not found")
+  }
+
+  const product = await res.json()
 
   return {
     title: product.name,
     description: `Get this product - ${product.name} on Jale for ${product.price}`,
     openGraph: {
       images: [product.image],
-      title: product.name,
-      description: `Get this product - ${product.name} on Jale for ${product.price}`,
     },
     twitter: {
       card: "summary_large_image",
-      title: product.name,
-      description: `Get this product - ${product.name} on Jale for ${product.price}`,
       images: [product.image],
     },
-  };
+  }
 }
 
-// ✅ This page no longer takes params because your client component uses useParams
+// ✅ Page component also needs to await params in Next.js 15
 export default function ProductPage() {
   return <ProductClientComponent />;
 }

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import {
   Search,
   ChevronRight,
@@ -449,7 +449,7 @@ export default function Home() {
 function ProductCard({ product, index }: { product: Product; index: number }) {
   const router = useRouter();
 
-  const stickyVariants = {
+  const stickyVariants : Variants = {
     initial: {
       scale: 1,
       boxShadow: "0 0 0 rgba(255, 107, 0, 0)",
@@ -469,7 +469,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
     },
   };
 
-  const fireAnimation = {
+  const fireAnimation : Variants = {
     animate: {
       y: [0, -2, 0],
       rotate: [0, 2, -2, 0],
@@ -481,7 +481,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
     },
   };
 
-  const sparkleAnimation = {
+  const sparkleAnimation : Variants = {
     animate: {
       scale: [1, 1.2, 1],
       opacity: [0.7, 1, 0.7],
@@ -545,7 +545,6 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
             variants={sparkleAnimation}
             animate="animate"
             className="absolute top-8 right-8 text-orange-400"
-            style={{ animationDelay: "0.5s" }}
           >
             <Zap size={6} fill="currentColor" />
           </motion.div>

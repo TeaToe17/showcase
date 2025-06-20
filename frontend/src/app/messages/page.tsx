@@ -4,7 +4,7 @@ import { useAppContext } from "@/context";
 import api from "@/lib/api";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import {
   User,
   Clock,
@@ -105,7 +105,7 @@ const Messages = () => {
     : chats;
 
   // Animation variants
-  const containerVariants = {
+  const containerVariants : Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -115,7 +115,7 @@ const Messages = () => {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,

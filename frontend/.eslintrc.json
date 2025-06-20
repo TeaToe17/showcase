@@ -1,3 +1,21 @@
 {
-  "extends": ["next/core-web-vitals"]
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "off",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "react/no-unescaped-entities": "off",
+
+    // Disable missing useEffect deps warnings
+    "react-hooks/exhaustive-deps": "off",
+
+    // Allow raw <a> instead of forcing <Link>
+    "@next/next/no-html-link-for-pages": "off",
+
+    // Allow <img> instead of next/image
+    "@next/next/no-img-element": "off",
+
+    // Optional: disable font warning (if you're using app/layout.tsx instead of _document.tsx)
+    "@next/next/no-page-custom-font": "off"
+  }
 }

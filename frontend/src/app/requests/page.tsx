@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAppContext } from "@/context";
 import { ACCESS_TOKEN } from "@/lib/constant";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { Upload, Loader2, AlertCircle, Check } from "lucide-react";
 import Image from "next/image";
 import { AxiosError } from "axios";
@@ -137,7 +137,7 @@ const Requests = () => {
   };
 
   // Animation variants
-  const containerVariants = {
+  const containerVariants : Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -147,7 +147,7 @@ const Requests = () => {
     },
   };
 
-  const itemVariants = {
+  const itemVariants : Variants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,
