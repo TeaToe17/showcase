@@ -1,78 +1,130 @@
+import type { Metadata } from "next"
+import type { ResolvingMetadata } from "next"
+import ProductClientComponent from "@/components/ProductClientComponent"
+
 // Force this route to be dynamically rendered on each request
-export const dynamic = 'force-dynamic';
-
-// Optionally, revalidate every request to prevent caching
-export const revalidate = 0;
-
-import type { Metadata } from "next";
-import type { ResolvingMetadata } from "next";
-import ProductClientComponent from "@/components/ProductClientComponent";
+export const dynamic = "force-dynamic"
 
 type GenerateMetadataParams = {
   params: Promise<{
-    id: string;
-  }>;
-};
-
-// This forces Next.js to treat this route as dynamic and call generateMetadata at runtime
-export async function generateStaticParams() {
-  return [];
+    id: string
+  }>
 }
 
 export async function generateMetadata(
   { params }: GenerateMetadataParams,
-  parent: ResolvingMetadata
+  parent: ResolvingMetadata,
 ): Promise<Metadata> {
-  const { id } = await params;
-
   try {
-    const res = await fetch(`https://jalev1.onrender.com/product/list/?product=${id}`, {
-      // Force dynamic fetch to avoid build-time issues
+    const { id } = await params
+
+    // Add timeout and better error handling
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
+    const res = await fetch(`https://jalev1.onrender.com/product/list/?product=${encodeURIComponent(id)}`, {
       cache: "no-store",
-    });
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    })
+
+    clearTimeout(timeoutId)
 
     if (!res.ok) {
-      console.error("Product metadata fetch failed with status", res.status);
+      console.error(`Product metadata fetch failed with status ${res.status} for product ID: ${id}`)
       return {
         title: "Product not found",
         description: "This product is unavailable on Jale.",
-      };
+      }
     }
 
-    const product = await res.json();
+    const product = await res.json()
 
-    const imageUrl = new URL(product.image, "https://jalev1.vercel.app/jalecover.jpg").toString();
+    // Validate the product data
+    if (!product || typeof product !== "object") {
+      console.error("Invalid product data received:", product)
+      return {
+        title: "Product not found",
+        description: "This product is unavailable on Jale.",
+      }
+    }
+
+    // Safely access product properties with fallbacks
+    const productName = product.name || "Product"
+    const productPrice = product.price || "0"
+    const productImage = product.image
+
+    // Handle image URL more safely
+    let imageUrl = "https://jalev1.vercel.app/jalecover.jpg" // Default fallback
+    if (productImage) {
+      try {
+        // Check if it's already a full URL
+        if (productImage.startsWith("http")) {
+          imageUrl = productImage
+        } else {
+          // Construct full URL if it's a relative path
+          imageUrl = new URL(productImage, "https://jalev1.onrender.com").toString()
+        }
+      } catch (urlError) {
+        console.error("Error constructing image URL:", urlError)
+        // Keep the default fallback image
+      }
+    }
 
     return {
-      title: product.name,
-      description: `Get this product - ${product.name} on Jale for ₦${product.price}`,
+      title: productName,
+      description: `Get this product - ${productName} on Jale for ₦${productPrice}`,
       openGraph: {
-        title: product.name,
-        description: `Buy ${product.name} for ₦${product.price} on Jale.`,
+        title: productName,
+        description: `Buy ${productName} for ₦${productPrice} on Jale.`,
+        images: [
+          {
+            url: imageUrl,
+            width: 1200,
+            height: 630,
+            alt: productName,
+          },
+        ],
+        type: "website",
+        siteName: "Jale",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: productName,
+        description: `Buy ${productName} for ₦${productPrice} on Jale.`,
         images: [imageUrl],
+      },
+    }
+  } catch (error) {
+    console.error("Error in generateMetadata:", error)
+
+    // Return fallback metadata instead of throwing
+    return {
+      title: "Jale - Online Shopping",
+      description: "Shop the best products on Jale.",
+      openGraph: {
+        title: "Jale - Online Shopping",
+        description: "Shop the best products on Jale.",
+        images: ["https://jalev1.vercel.app/jalecover.jpg"],
         type: "website",
       },
       twitter: {
         card: "summary_large_image",
-        title: product.name,
-        description: `Buy ${product.name} for ₦${product.price} on Jale.`,
-        images: [imageUrl],
+        title: "Jale - Online Shopping",
+        description: "Shop the best products on Jale.",
+        images: ["https://jalev1.vercel.app/jalecover.jpg"],
       },
-    };
-  } catch (error) {
-    console.error("Error in generateMetadata:", error);
-    return {
-      title: "Error loading product",
-      description: "Something went wrong fetching this product.",
-    };
+    }
   }
 }
 
-// The page component (client-rendered or server-rendered)
+// The page component
 export default function ProductPage() {
-  return <ProductClientComponent />;
+  return <ProductClientComponent />
 }
-
 
 
 
