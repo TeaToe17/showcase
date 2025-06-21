@@ -33,7 +33,7 @@ class ProductListView(generics.ListAPIView):
         queryset = Product.objects.annotate(
             effective_sort_date=Case(
                 When(is_sticky=True, then='sticky_timestamp'),
-                default='created',
+                default='-created',
                 output_field=DateTimeField()
             )
         ).order_by('-is_sticky', '-effective_sort_date')

@@ -930,6 +930,8 @@ const MyProducts = () => {
             </button>
           </div>
 
+          <p className="mb-2" >10% service fee applied</p>
+
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(3)].map((_, index) => (
