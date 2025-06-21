@@ -36,13 +36,12 @@ export async function generateMetadata(
     }
 
     const product = await res.json();
+    console.log(product)
 
     const productName = product.name || "Product";
-    const productPrice = product.price || "0";
-    const productImage = product.image || "";
-    const imageUrl = productImage.startsWith("http")
-      ? productImage
-      : `https://jalev1.onrender.com${productImage}`;
+    const productPrice = product.price || "";
+    const productImage = product.image || "https://jalev1.vercel.app/jalecover.jpg";
+
 
     return {
       title: productName,
@@ -50,7 +49,7 @@ export async function generateMetadata(
       openGraph: {
         title: productName,
         description: `Buy ${productName} for ₦${productPrice} on Jale.`,
-        images: [{ url: imageUrl, width: 1200, height: 630 }],
+        images: [{ url: productImage, width: 1200, height: 630 }],
         type: "website",
         siteName: "Jale",
       },
@@ -58,7 +57,7 @@ export async function generateMetadata(
         card: "summary_large_image",
         title: productName,
         description: `Buy ${productName} for ₦${productPrice} on Jale.`,
-        images: [imageUrl],
+        images: [productImage],
       },
     };
   } catch (error) {
