@@ -283,17 +283,17 @@ const ProductClientComponent = () => {
               <span>Back</span>
             </button>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+          {/* <div className="flex items-center gap-3"> */}
+            {/* <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
               <Heart size={20} className="text-gray-600" />
-            </button>
-            <button
+            </button> */}
+            {/* <button
               onClick={() => shareViaWhatsApp()}
               className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
             >
               <Share2 size={20} className="text-gray-600" />
-            </button>
-          </div>
+            </button> */}
+          {/* </div> */}
         </div>
 
         <AnimatePresence>
