@@ -1,103 +1,103 @@
-import type { Metadata } from "next"
+// import type { Metadata } from "next"
 import ProductClientComponent from "@/components/ProductClientComponent"
 
-// Force dynamic rendering
-export const dynamic = "force-dynamic"
+// // Force dynamic rendering
+// export const dynamic = "force-dynamic"
 
-type Props = {
-  params: Promise<{ id: string }>
-}
+// type Props = {
+//   params: Promise<{ id: string }>
+// }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  console.log("🔍 generateMetadata called")
+// export async function generateMetadata({ params }: Props): Promise<Metadata> {
+//   console.log("🔍 generateMetadata called")
 
-  try {
-    const { id } = await params
-    console.log("📝 Product ID:", id)
+//   try {
+//     const { id } = await params
+//     console.log("📝 Product ID:", id)
 
-    // Test if we can reach the API at all
-    console.log("🌐 Attempting to fetch from API...")
+//     // Test if we can reach the API at all
+//     console.log("🌐 Attempting to fetch from API...")
 
-    const apiUrl = `https://jalev1.onrender.com/product/list/?product=${id}`
-    console.log("🔗 API URL:", apiUrl)
+//     const apiUrl = `https://jalev1.onrender.com/product/list/?product=${id}`
+//     console.log("🔗 API URL:", apiUrl)
 
-    const response = await fetch(apiUrl, {
-      cache: "no-store",
-      headers: {
-        "User-Agent": "NextJS-App/1.0",
-      },
-    })
+//     const response = await fetch(apiUrl, {
+//       cache: "no-store",
+//       headers: {
+//         "User-Agent": "NextJS-App/1.0",
+//       },
+//     })
 
-    console.log("📊 Response status:", response.status)
-    console.log("📊 Response ok:", response.ok)
-    console.log("📊 Response headers:", Object.fromEntries(response.headers.entries()))
+//     console.log("📊 Response status:", response.status)
+//     console.log("📊 Response ok:", response.ok)
+//     console.log("📊 Response headers:", Object.fromEntries(response.headers.entries()))
 
-    if (!response.ok) {
-      console.error("❌ API request failed:", response.status, response.statusText)
+//     if (!response.ok) {
+//       console.error("❌ API request failed:", response.status, response.statusText)
 
-      // Try to read the error response
-      try {
-        const errorText = await response.text()
-        console.error("❌ Error response body:", errorText)
-      } catch (e) {
-        console.error("❌ Could not read error response")
-      }
+//       // Try to read the error response
+//       try {
+//         const errorText = await response.text()
+//         console.error("❌ Error response body:", errorText)
+//       } catch (e) {
+//         console.error("❌ Could not read error response")
+//       }
 
-      return {
-        title: "Product Not Found",
-        description: "This product could not be loaded.",
-      }
-    }
+//       return {
+//         title: "Product Not Found",
+//         description: "This product could not be loaded.",
+//       }
+//     }
 
-    const responseText = await response.text()
-    console.log("📄 Raw response:", responseText.substring(0, 500))
+//     const responseText = await response.text()
+//     console.log("📄 Raw response:", responseText.substring(0, 500))
 
-    let product
-    try {
-      product = JSON.parse(responseText)
-      console.log("✅ Parsed product:", product)
-    } catch (parseError) {
-      console.error("❌ JSON parse error:", parseError)
-      console.error("❌ Response was not valid JSON:", responseText)
+//     let product
+//     try {
+//       product = JSON.parse(responseText)
+//       console.log("✅ Parsed product:", product)
+//     } catch (parseError) {
+//       console.error("❌ JSON parse error:", parseError)
+//       console.error("❌ Response was not valid JSON:", responseText)
 
-      return {
-        title: "Error Loading Product",
-        description: "Product data could not be parsed.",
-      }
-    }
+//       return {
+//         title: "Error Loading Product",
+//         description: "Product data could not be parsed.",
+//       }
+//     }
 
-    // Validate product structure
-    if (!product || typeof product !== "object") {
-      console.error("❌ Invalid product structure:", typeof product, product)
-      return {
-        title: "Invalid Product Data",
-        description: "Product data is not in expected format.",
-      }
-    }
+//     // Validate product structure
+//     if (!product || typeof product !== "object") {
+//       console.error("❌ Invalid product structure:", typeof product, product)
+//       return {
+//         title: "Invalid Product Data",
+//         description: "Product data is not in expected format.",
+//       }
+//     }
 
-    const metadata = {
-      title: product.name || "Product",
-      description: `${product.name || "Product"} - ₦${product.price || "0"} on Jale`,
-      openGraph: {
-        title: product.name || "Product",
-        description: `Buy ${product.name || "this product"} for ₦${product.price || "0"} on Jale`,
-        images: [product.image || "https://jale.vercel.app/jalecover.jpg"],
-      },
-    }
+//     const metadata = {
+//       title: product.name || "Product",
+//       description: `${product.name || "Product"} - ₦${product.price || "0"} on Jale`,
+//       openGraph: {
+//         title: product.name || "Product",
+//         description: `Buy ${product.name || "this product"} for ₦${product.price || "0"} on Jale`,
+//         images: [product.image || "https://jale.vercel.app/jalecover.jpg"],
+//       },
+//     }
 
-    console.log("✅ Generated metadata:", metadata)
-    return metadata
-  } catch (error) {
-    console.error("💥 generateMetadata error:", error)
-    console.error("💥 Error stack:", error instanceof Error ? error.stack : "No stack trace")
+//     console.log("✅ Generated metadata:", metadata)
+//     return metadata
+//   } catch (error) {
+//     console.error("💥 generateMetadata error:", error)
+//     console.error("💥 Error stack:", error instanceof Error ? error.stack : "No stack trace")
 
-    // Return basic fallback metadata
-    return {
-      title: "Jale - Product",
-      description: "Shop products on Jale",
-    }
-  }
-}
+//     // Return basic fallback metadata
+//     return {
+//       title: "Jale - Product",
+//       description: "Shop products on Jale",
+//     }
+//   }
+// }
 
 export default function ProductPage() {
   return <ProductClientComponent  />

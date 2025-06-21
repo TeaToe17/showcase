@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     "Level up your hustle 💼💸. From books to gadgets to whatever's in your bag – Jale is the go-to campus marketplace. Join with a referral & unlock exclusive perks 🔥🚀.",
   openGraph: {
     title: "Join Our Amazing Platform - Special Invitation",
-    description: "You've been personally invited! Join now and get exclusive benefits.",
+    description: "Turn your unused books and materials into cash! Join now to sell anything you no longer need, earn from your shelf clutter, and even negotiate prices when money’s tight. You’ve been personally invited – don’t miss out on this chance to make and save money!",
     images: [
       {
         url: "https://jale.vercel.app/jalecover.jpg",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Join Our Amazing Platform - Buy. Sell. Negotiate. Flex.",
-    description: "You've been personally invited! Join now and get exclusive benefits.",
+    description: "Turn your unused books and materials into cash! Join now to sell anything you no longer need, earn from your shelf clutter, and even negotiate prices when money’s tight. You’ve been personally invited – don’t miss out on this chance to make and save money!",
     images: ["https://jale.vercel.app/jalecover.jpg"],
   },
 }
