@@ -1,32 +1,91 @@
-import { Metadata } from "next";
+// Force dynamic rendering — ensures metadata runs server-side every time
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+import type { Metadata, ResolvingMetadata } from "next";
 import ProductClientComponent from "@/components/ProductClientComponent";
-import Head from "next/head";
 
-export default async function ProductPage({ params }: { params: { id: string } }) {
-  const res = await fetch(`https://jalev1.onrender.com/product/list/?product=${params.id}`, {
-    cache: "no-store",
-  });
-  const product = await res.json();
-  const imageUrl = new URL(product.image, "https://jalev1.onrender.com/jalecover.jpg").toString();
-
-  return (
-    <>
-      <Head>
-        <title>{product.name}</title>
-        <meta name="description" content={`Get this product - ${product.name} on Jale for ₦${product.price}`} />
-        <meta property="og:title" content={product.name} />
-        <meta property="og:description" content={`Buy ${product.name} for ₦${product.price} on Jale.`} />
-        <meta property="og:image" content={imageUrl} />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:image" content={imageUrl} />
-      </Head>
-      <ProductClientComponent />
-    </>
-  );
+// ✅ Required for dynamic routes in Next.js 15 — tells Next.js this route uses runtime params
+export async function generateStaticParams() {
+  return [];
 }
 
+// ✅ Metadata function must use params as a Promise
+export async function generateMetadata(
+  { params }: { params: Promise<{ id: string }> },
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  try {
+    const { id } = await params;
 
+    const res = await fetch(
+      `https://jalev1.onrender.com/product/list/?product=${encodeURIComponent(
+        id
+      )}`,
+      {
+        cache: "no-store",
+      }
+    );
 
+    if (!res.ok) {
+      console.error(`Metadata fetch failed with status ${res.status}`);
+      return {
+        title: "Product not found",
+        description: "This product is unavailable on Jale.",
+      };
+    }
+
+    const product = await res.json();
+
+    const productName = product.name || "Product";
+    const productPrice = product.price || "0";
+    const productImage = product.image || "";
+    const imageUrl = productImage.startsWith("http")
+      ? productImage
+      : `https://jalev1.onrender.com${productImage}`;
+
+    return {
+      title: productName,
+      description: `Get this product - ${productName} on Jale for ₦${productPrice}`,
+      openGraph: {
+        title: productName,
+        description: `Buy ${productName} for ₦${productPrice} on Jale.`,
+        images: [{ url: imageUrl, width: 1200, height: 630 }],
+        type: "website",
+        siteName: "Jale",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: productName,
+        description: `Buy ${productName} for ₦${productPrice} on Jale.`,
+        images: [imageUrl],
+      },
+    };
+  } catch (error) {
+    console.error("Metadata error:", error);
+    return {
+      title: "Jale - Online Shopping",
+      description: "Shop the best products on Jale.",
+      openGraph: {
+        title: "Jale - Online Shopping",
+        description: "Shop the best products on Jale.",
+        images: ["https://jalev1.vercel.app/jalecover.jpg"],
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: "Jale - Online Shopping",
+        description: "Shop the best products on Jale.",
+        images: ["https://jalev1.vercel.app/jalecover.jpg"],
+      },
+    };
+  }
+}
+
+// ✅ Page component: `params` is a plain object here, not a Promise
+export default function ProductPage() {
+  return <ProductClientComponent />;
+}
 
 // import type { Metadata } from "next"
 // import type { ResolvingMetadata } from "next"
@@ -155,8 +214,6 @@ export default async function ProductPage({ params }: { params: { id: string } }
 // export default function ProductPage() {
 //   return <ProductClientComponent />
 // }
-
-
 
 // export const dynamic = 'force-dynamic';
 
