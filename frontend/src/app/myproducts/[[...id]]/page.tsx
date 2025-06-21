@@ -950,7 +950,7 @@ const MyProducts = () => {
                 </div>
               ))}
             </div>
-          ) : products.length > 0 ? (
+          ) : products?.length > 0 ? (
             <motion.div
               initial="hidden"
               animate="visible"

@@ -30,36 +30,42 @@ class ProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
 
     def get_queryset(self):
+        self.unstick_expired_products()
+
         queryset = Product.objects.annotate(
             effective_sort_date=Case(
                 When(is_sticky=True, then='sticky_timestamp'),
-                default='-created',
+                default='created',  # Removed the '-' here; sorting is handled below
                 output_field=DateTimeField()
             )
         ).order_by('-is_sticky', '-effective_sort_date')
 
-        ## This particular id is for request in seller View to get all products owned by a user
         url_id = self.kwargs.get("id")
+        product_id = self.request.GET.get("product")
         user = self.request.user
 
-        product_id = self.request.GET.get("product")
+        # Filter by owner ID if it's the current authenticated user
+        if url_id and user.is_authenticated and int(url_id) == user.id:
+            queryset = queryset.filter(owner__id=url_id)
 
+        # Filter by specific product ID
+        if product_id:
+            queryset = queryset.filter(id=int(product_id))
+
+        return queryset
+
+    def unstick_expired_products(self):
         try:
+            expiry_time = timezone.now() - timedelta(hours=2)
             updated_count = Product.objects.filter(
                 is_sticky=True,
-                sticky_timestamp__lt=timezone.now() - timedelta(hours=2)
+                sticky_timestamp__lt=expiry_time
             ).update(is_sticky=False, sticky_timestamp=None)
 
             if updated_count:
                 print(f"{updated_count} sticky products unstuck.")
         except Exception as e:
             print("Error unsticking expired products:", e)
-
-        if url_id and user.is_authenticated and int(url_id) == int(user.id):
-            return queryset.filter(owner__id=url_id)
-        if product_id:
-            queryset = queryset.filter(id=int(product_id))
-        return queryset
             
 
 
