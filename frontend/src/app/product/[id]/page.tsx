@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from "next";
 import type { ResolvingMetadata } from "next";
 import ProductClientComponent from "@/components/ProductClientComponent";
