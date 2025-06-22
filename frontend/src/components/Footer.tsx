@@ -7,6 +7,7 @@ import {
   Phone,
   MapPin,
   ChevronRight,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -96,7 +97,7 @@ function Footer() {
                   rel="noopener noreferrer"
                   className="bg-[#1c2b3a] text-white p-2 rounded-full hover:opacity-80 transition-opacity"
                 >
-                  <Twitter size={16} />
+                  <X size={16} />
                 </a>
               </div>
             </div>
@@ -145,7 +146,7 @@ function Footer() {
                 </li>
                 <li>
                   <Link
-                    href="mailto:titobiloluwaa83@gmail.com"
+                    href="mailto:jale.official.contact@gmail.com"
                     className="text-sm flex items-center hover:text-[#1c2b3a]/70 transition-colors"
                   >
                     <ChevronRight size={14} className="mr-1" />
@@ -234,7 +235,9 @@ function Footer() {
                     size={18}
                     className="mr-2 flex-shrink-0 text-[#1c2b3a]"
                   />
-                  <span className="text-sm">jale.official.contact@gmail.com</span>
+                  <span className="text-sm">
+                    jale.official.contact@gmail.com
+                  </span>
                 </li>
               </ul>
               <div className="mt-4 p-3 bg-white/50 rounded-lg">
