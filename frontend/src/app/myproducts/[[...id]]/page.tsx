@@ -25,7 +25,7 @@ import {
 
 import api from "@/lib/api";
 import ProductComponent from "@/components/Product";
-import { fetchProducts, fetchCategories, getUser } from "@/lib/utils";
+import { fetchProducts, fetchCategories, getUser, IsUser } from "@/lib/utils";
 
 interface Product {
   id: number;
@@ -161,6 +161,11 @@ const MyProducts = () => {
 
   const createProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!IsUser()) {
+      router.push("/login")
+    };
+
     setIsSubmitting(true);
     setError("");
 
@@ -397,7 +402,7 @@ const MyProducts = () => {
   };
 
   // Animation variants
-  const containerVariants : Variants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -407,7 +412,7 @@ const MyProducts = () => {
     },
   };
 
-  const itemVariants : Variants = {
+  const itemVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,
@@ -930,7 +935,7 @@ const MyProducts = () => {
             </button>
           </div>
 
-          <p className="mb-2" >10% service fee applied</p>
+          <p className="mb-2">10% service fee applied</p>
 
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1033,8 +1038,8 @@ const MyProducts = () => {
                   No Products Yet
                 </h3>
                 <p className="text-gray-500 mb-6">
-                  You have not added any products yet. Start by adding your first
-                  product above.
+                  You have not added any products yet. Start by adding your
+                  first product above.
                 </p>
                 <motion.button
                   whileHover={{ scale: 1.05 }}

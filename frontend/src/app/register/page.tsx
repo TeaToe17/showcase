@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import ReferralLanding from "@/components/referral-landing";
+import { Loader2 } from "lucide-react";
 
 const FormWrapper = dynamic(() => import("@/components/Formwrapper"), {
   ssr: false,
@@ -11,7 +12,9 @@ const FormWrapper = dynamic(() => import("@/components/Formwrapper"), {
 const Register = () => {
   return (
     <>
-      <Suspense fallback={<p>Loading form...</p>}>
+      <Suspense
+        fallback={<Loader2 size={16} className="animate-spin mx-auto" />}
+      >
         <ReferralLanding />
         <div
           style={{
