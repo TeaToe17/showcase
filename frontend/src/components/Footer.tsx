@@ -108,7 +108,7 @@ function Footer() {
                 Quick Links
               </h3>
               <ul className="space-y-2">
-                <li>
+                {/* <li>
                   <Link
                     href="/"
                     className="text-sm flex items-center hover:text-[#1c2b3a]/70 transition-colors"
@@ -116,7 +116,7 @@ function Footer() {
                     <ChevronRight size={14} className="mr-1" />
                     About Us
                   </Link>
-                </li>
+                </li> */}
                 <li>
                   <Link
                     href="/"
@@ -135,7 +135,7 @@ function Footer() {
                     Sell on Jàle
                   </Link>
                 </li>
-                <li>
+                {/* <li>
                   <Link
                     href="/"
                     className="text-sm flex items-center hover:text-[#1c2b3a]/70 transition-colors"
@@ -143,7 +143,7 @@ function Footer() {
                     <ChevronRight size={14} className="mr-1" />
                     FAQ
                   </Link>
-                </li>
+                </li> */}
                 <li>
                   <Link
                     href="mailto:jale.official.contact@gmail.com"
@@ -186,7 +186,7 @@ function Footer() {
                     className="text-sm flex items-center hover:text-[#1c2b3a]/70 transition-colors"
                   >
                     <ChevronRight size={14} className="mr-1" />
-                    Home & Garden
+                    Home & Office
                   </Link>
                 </li>
                 <li>
@@ -198,7 +198,7 @@ function Footer() {
                     Phones & Tablets
                   </Link>
                 </li>
-                <li>
+                {/* <li>
                   <Link
                     href="/"
                     className="text-sm flex items-center hover:text-[#1c2b3a]/70 transition-colors"
@@ -206,7 +206,7 @@ function Footer() {
                     <ChevronRight size={14} className="mr-1" />
                     Services
                   </Link>
-                </li>
+                </li> */}
               </ul>
             </div>
 
