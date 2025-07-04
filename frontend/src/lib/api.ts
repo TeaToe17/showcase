@@ -23,7 +23,8 @@ type User = {
 
 const isTokenExpired = (token: any): boolean => {
   try {
-    const decoded: { exp?: number } = jwtDecode(token); // Specify type for decoded token
+    const decoded: { exp?: number } = jwtDecode(token); // Specify type
+    // for decoded token
     const now = Math.floor(Date.now() / 1000); // Current time in seconds
 
     // Check if `exp` exists and compare it with the current time

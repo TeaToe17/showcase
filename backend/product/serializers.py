@@ -27,8 +27,13 @@ class ProductSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
     # Run your custom logic only during updates
-        print("validated_data", validated_data)
-        print("instance", instance)
+        # print("validated_data", validated_data)
+        # print("instance", instance)
+
+        image_file = validated_data.get('imagefile')  # still upload image
+        result = upload(image_file, quality="85")
+        if result:
+            instance.image = result.get('secure_url')
 
         new_stock = validated_data.get("stock")
 
