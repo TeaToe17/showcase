@@ -104,6 +104,7 @@ const Messages = () => {
       )
     : chats;
 
+
   // Animation variants
   const containerVariants : Variants = {
     hidden: { opacity: 0 },

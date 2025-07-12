@@ -7,7 +7,7 @@ from .models import Message, ChatPreview
 def update_chat_preview(sender, instance, created, **kwargs):
     if not created and instance.read:
         user1 = instance.sender
-        user2 = instance.receiver  # Spelling fix: 'reciver' → 'receiver'
+        user2 = instance.receiver  
 
         try:
             chatpreview = ChatPreview.objects.get(
@@ -23,3 +23,4 @@ def update_chat_preview(sender, instance, created, **kwargs):
             print("ChatPreview not found.")
         except Exception as e:
             print("Unexpected error:", e)
+

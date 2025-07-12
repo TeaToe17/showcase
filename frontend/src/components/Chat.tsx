@@ -247,6 +247,7 @@ const ChatWindow: React.FC<ChatProps> = ({ receiverId }) => {
     }
   }, [messages, currentUser?.id, receiverId, setMessageTrigger]);
 
+
   // Scroll to bottom when messages or pending messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({

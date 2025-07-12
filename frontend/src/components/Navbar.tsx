@@ -124,7 +124,8 @@ const Navbar = () => {
 
   // Fetch chat previews when messageTrigger is true
   useEffect(() => {
-    if (!messageTrigger || !isLoggedIn) return;
+    if (!isLoggedIn) return;
+    // if (!messageTrigger || !isLoggedIn) return;
 
     const token = localStorage.getItem(ACCESS_TOKEN);
     if (token) {
@@ -133,7 +134,7 @@ const Navbar = () => {
           console.log("fetched chat previews for navbar");
           const res = await api.get("user/chatpreview/list/");
           const data: ChatPreview[] = res.data;
-
+          console.log("preview Fetched");
           setChats(data);
           // Reset the trigger after successful fetch
           setMessageTrigger(false);
@@ -149,6 +150,8 @@ const Navbar = () => {
 
   // Update message count when chats change
   useEffect(() => {
+    console.log(chats);
+    console.log(currentUser);
     if (chats.length < 1 || !currentUser) return;
 
     const user_id = Number(currentUser.id);
@@ -160,9 +163,11 @@ const Navbar = () => {
       }
       return acc;
     }, 0);
-
+    console.log("Message count updated");
+    console.log(count);
     setMessageCount(count);
   }, [chats, currentUser, setMessageCount, globalMessages]);
+  // }, [chats, currentUser, setMessageCount, globalMessages]);
 
   const navItems = isLoggedIn ? (
     <>
