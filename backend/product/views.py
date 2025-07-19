@@ -13,7 +13,6 @@ from .models import Product, Category
 class ProductCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
-    queryset = Product.objects.all()
 
     def create(self, *args, **kwargs):
         try:
